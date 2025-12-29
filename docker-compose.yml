@@ -14,7 +14,8 @@ services:
 
   api:
     build:
-      context: ./backend
+      context: ./backend          # backend is the build context
+    working_dir: /app             # set container working directory
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/app_db
       PORT: "4000"
@@ -22,6 +23,10 @@ services:
       - "4000:4000"
     depends_on:
       - postgres
+    volumes:
+      - ./backend:/app            # mount host backend folder to container
+      - /app/node_modules         # keep container node_modules
+    command: npm run dev          # run nodemon
 
 volumes:
   db_data:
