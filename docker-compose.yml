@@ -11,22 +11,29 @@ services:
       - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d app_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   api:
     build:
-      context: ./backend          # backend is the build context
-    working_dir: /app             # set container working directory
+      context: ./backend
+    working_dir: /app
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/app_db
       PORT: "4000"
     ports:
       - "4000:4000"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     volumes:
-      - ./backend:/app            # mount host backend folder to container
-      - /app/node_modules         # keep container node_modules
-    command: npm run dev          # run nodemon
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run dev
 
 volumes:
   db_data:
