@@ -6,7 +6,7 @@ import pool from "./0_config/db.js"
 
 const migrations = [
   "0_users.sql",
-  "1_penalty_rules.sql",
+  "1_penalties.sql",
   "2_quests.sql",
   "3_progress.sql",
 ]
