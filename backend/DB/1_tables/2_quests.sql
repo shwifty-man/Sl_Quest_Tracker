@@ -7,8 +7,7 @@ CREATE TABLE IF NOT EXISTS quests (
   target_value INTEGER NOT NULL,
   current_value INTEGER NOT NULL DEFAULT 0,
   unit TEXT NOT NULL,
-  status VARCHAR(20) NOT NULL DEFAULT 'pending', -- pending, completed, failed
-  penalty_rule_id INTEGER REFERENCES penalty_rules(id),
+  status TEXT NOT NULL DEFAULT 'pending',      -- fixed: enum-like definition -> TEXT
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   is_completed BOOLEAN DEFAULT false
 );
