@@ -22,9 +22,12 @@ export async function startCronJob() {
           [quest.user_id]
         )
         console.log(
-          `User ${quest.user_id} failed quest ${quest.id}, penalty applied.`
-        )
+          `User ${quest.user_id} failed quest ${quest.id}, penalty applied.` 
+        ) 
       }
+      // If the penalty ended then set active to false
+      await client.query(`UPDATE penalties SET active = false WHERE active = true AND ends_at <= now()`)
+
       await client.query("COMMIT")
     } catch (error) {
       await client.query("ROLLBACK")
