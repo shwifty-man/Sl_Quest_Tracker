@@ -2,9 +2,8 @@
 import pool from "../../DB/0_config/db.js"
 
 export async function getUserQuests(userId) {
-
   try {
-    const sql = `SELECT * FROM quests WHERE user_id = $1`
+    const sql = `SELECT * FROM quests WHERE user_id = $1 AND is_completed = false;`
     const results = await pool.query(sql, [userId])
     return results.rows
   } catch (err) {
@@ -13,7 +12,6 @@ export async function getUserQuests(userId) {
 }
 
 export async function getQuestById(userId, questId) {
-
   try {
     const sql = `SELECT * FROM quests WHERE user_id = $1 AND id = $2`
     const results = await pool.query(sql, [userId, questId])
@@ -24,7 +22,6 @@ export async function getQuestById(userId, questId) {
 }
 
 export async function updateProgress(userId, questId, currentValue) {
-
   try {
     const sql = `UPDATE quests SET current_value = $1 WHERE id = $2 AND user_id = $3 RETURNING *;`
     const results = await pool.query(sql, [currentValue, questId, userId])
@@ -55,9 +52,8 @@ export async function completeQuest(userId, questId) {
 }
 
 async function createDeadline() {
-
   try {
-    const sql = `SELECT now() + interval '24 hours' AS deadline;`
+    const sql = `SELECT now() + interval '1 minute' AS deadline;`
     const results = await pool.query(sql)
     console.log("Deadline results: ", results.rows[0])
     return results.rows[0].deadline
@@ -81,7 +77,10 @@ function computeExp(targetValue) {
 }
 
 // Create the Quest
-export async function createQuest(userId, { questTitle, unitName, targetValue, currentValue = 0 }) {
+export async function createQuest(
+  userId,
+  { questTitle, unitName, targetValue, currentValue = 0 }
+) {
   // insert a new user in the DB and return the created user record
   try {
     const deadline = await createDeadline()
@@ -104,3 +103,17 @@ export async function createQuest(userId, { questTitle, unitName, targetValue, c
     throw new Error(err.message)
   }
 }
+
+/* 
+
+{
+    "questData": {"questTitle": "test1", "unitName": "unittest1", "targetValue": 100}
+}
+
+
+{
+    "email": "user@example.com",
+    "password": "password123"
+}
+
+*/
