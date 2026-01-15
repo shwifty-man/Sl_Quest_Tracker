@@ -1,20 +1,43 @@
-import { StatusBar } from "expo-status-bar"
-import { StyleSheet, Text, View } from "react-native"
+import { NavigationContainer } from "@react-navigation/native"
+import { createNativeStackNavigator } from "@react-navigation/native-stack"
+import Register from "./src/1_screens/0_Register"
+import Login from "./src/1_screens/1_Login"
+import Home from "./src/1_screens/4_Home"
+import { useAuth } from "./src/2_services/auth.service"
 
-export default function App() {
+const Stack = createNativeStackNavigator()
+
+
+function AuthStack() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="Register" component={Register} />
+    </Stack.Navigator>
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-})
+function AppStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Home" component={Home} />
+    </Stack.Navigator>
+  )
+}
+
+
+function RootNavigator() {
+  const { user, isLoading } = useAuth()
+
+  if (isLoading) return null // or splash screen
+
+  return user ? <AppStack /> : <AuthStack />
+}
+
+export default function App() {
+  return (
+    <NavigationContainer>
+    <RootNavigator />
+    </NavigationContainer>
+  )
+}
