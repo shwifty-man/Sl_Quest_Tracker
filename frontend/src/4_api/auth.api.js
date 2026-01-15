@@ -1,0 +1,57 @@
+import AsyncStorage from "@react-native-async-storage/async-storage"
+
+export async function fetchLogin(credentials) {
+  try {
+    const response = await fetch(
+      `${process.env.EXPO_PUBLIC_BACKEND_URL}/auth/login`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: credentials.email,
+          password: credentials.password,
+        }),
+      }
+    )
+    if (!response.ok) {
+      throw new Error("Network response was not ok")
+    }
+
+    const data = await response.json()
+
+    if (response.ok) {
+      console.log("Login response was ok.")
+    }
+    return data
+  } catch (error) {
+    console.error("Error fetching data:", error)
+  }
+}
+
+export async function fetchRegister(credentials) {
+  try {
+    console.log("Register Credentials: ", credentials)
+    const response = await fetch(
+      `${process.env.EXPO_PUBLIC_BACKEND_URL}/auth/register`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: credentials.email,
+          password: credentials.password,
+        }),
+      }
+    )
+    if (!response.ok) {
+      throw new Error("Network response was NOT ok")
+    }
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error("Error fetching data:", error)
+  }
+}
