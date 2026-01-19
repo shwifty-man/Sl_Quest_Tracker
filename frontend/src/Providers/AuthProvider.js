@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect } from "react"
-import { fetchLogin, fetchRegister } from "./4_api/auth.api"
-import { STORAGE_KEYS, storeJWTToken, storeUser } from './2_services/storage'
+import { fetchLogin, fetchRegister } from "../4_api/auth.api"
+import { STORAGE_KEYS, storeJWTToken, storeUser } from "../2_services/storage"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
 // 1. Create the context
@@ -28,7 +28,6 @@ export function AuthProvider({ children }) {
       // Store the token and user
       await storeJWTToken(data.token)
       await storeUser(data.user)
-      
     } catch (err) {
       throw new Error(err)
     } finally {
@@ -40,7 +39,6 @@ export function AuthProvider({ children }) {
   const register = async (data) => {
     // call backend, get token & user, update state
     try {
-
       const registerData = await fetchRegister(data)
       console.log("registerData.token: ", registerData.token)
       await storeJWTToken(registerData.token)
@@ -64,17 +62,17 @@ export function AuthProvider({ children }) {
       const savedToken = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
       const savedUser = await AsyncStorage.getItem(STORAGE_KEYS.USER)
       console.log("RESTORE SESSION SAVED USER IS: ", savedUser)
-      
+
       if (savedToken && savedUser) {
         setToken(savedToken)
         setUser(JSON.parse(savedUser))
       }
     } catch (err) {
-    console.log(err)
-  } finally {
-    setIsLoading(false)
+      console.log(err)
+    } finally {
+      setIsLoading(false)
+    }
   }
-}
 
   // 2e. Run restoreSession once on mount
   useEffect(() => {
