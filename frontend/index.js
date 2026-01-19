@@ -1,6 +1,6 @@
 import { registerRootComponent } from "expo"
 import App from "./App"
-import { AuthProvider } from "./src/AuthProvider"
+import { AuthProvider } from "./src/Providers/AuthProvider"
 
 function Root() {
   return (
