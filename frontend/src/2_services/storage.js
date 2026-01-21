@@ -43,3 +43,12 @@ export async function storeUser(user) {
     throw new Error(err)
   }
 }
+
+export async function removeUser() {
+  try {
+    await AsyncStorage.removeItem(STORAGE_KEYS.USER)
+    console.log("Removed User")
+  } catch (err) {
+    throw new Error(err)
+  }
+}
