@@ -1,7 +1,8 @@
 import React, { createContext, useState, useEffect } from "react"
 import { fetchLogin, fetchRegister } from "../4_api/auth.api"
-import { STORAGE_KEYS, storeJWTToken, storeUser } from "../2_services/storage"
+import { removeJWTToken, removeUser, STORAGE_KEYS, storeJWTToken, storeUser } from "../2_services/storage"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { DevSettings } from "react-native"
 
 // 1. Create the context
 export const AuthContext = createContext()
@@ -20,6 +21,11 @@ export function AuthProvider({ children }) {
     try {
       // Send request to backend to login user
       const data = await fetchLogin(credentials)
+
+        if (!data || !data.user || !data.token) {
+          console.error("Invalid login data:", data)
+          return
+        }
 
       // Set user and token
       setUser(data.user)
@@ -51,8 +57,11 @@ export function AuthProvider({ children }) {
   }
 
   // 2c. Function: logout
-  const logout = () => {
+  const logout = async () => {
     // clear token & user
+    await removeJWTToken()
+    await removeUser()
+    DevSettings.reload()
   }
 
   // 2d. Function: restoreSession
