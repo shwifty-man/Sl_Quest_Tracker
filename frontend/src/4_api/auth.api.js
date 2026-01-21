@@ -16,7 +16,7 @@ export async function fetchLogin(credentials) {
       }
     )
     if (!response.ok) {
-      throw new Error("Network response was not ok")
+      throw new Error("Network response was not ok and status: " + response.status)
     }
 
     const data = await response.json()
@@ -26,7 +26,7 @@ export async function fetchLogin(credentials) {
     }
     return data
   } catch (error) {
-    console.error("Error fetching data:", error)
+    throw new Error("Fetching data:" + error)
   }
 }
 
