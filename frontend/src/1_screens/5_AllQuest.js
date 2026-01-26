@@ -15,7 +15,7 @@ const QuestsList = () => {
       <FlatList
         style={{flex:1}}
         data={quests}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => {
           console.log("Rendering item", item)
           return (
