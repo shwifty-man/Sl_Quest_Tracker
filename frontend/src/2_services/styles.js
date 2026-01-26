@@ -20,6 +20,7 @@ export const styles = StyleSheet.create({
     paddingLeft: 30,
     marginBottom: 12,
     backgroundColor: "#26282B",
+    color: "#9FDAEF",
   },
   button: {
     backgroundColor: "#5BA4DE",
@@ -46,5 +47,35 @@ export const styles = StyleSheet.create({
     textShadowColor: "rgba(255, 255, 255, 0.8)",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 12,
+  },
+  card: {
+    backgroundColor: "#092356",
+    padding: 16,
+    borderRadius: 12,
+    marginVertical: 8,
+  },
+  questTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#62D5F8",
+    marginBottom: 4,
+  },
+  unit: {
+    fontSize: 14,
+    color: "#ccc",
+  },
+  progress: {
+    marginTop: 6,
+    fontSize: 14,
+    color: "#9FDAEF",
+  },
+  empty: {
+    color: "#aaa",
+    fontSize: 16,
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 })

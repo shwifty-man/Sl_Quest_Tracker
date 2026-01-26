@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
 
 export async function setCachedQuests(quests) {
   await AsyncStorage.setItem(STORAGE_KEYS.QUESTS, JSON.stringify(quests))
+  console.log("Stored Quest")
 }
 
 export async function getCachedQuests() {
@@ -19,7 +20,8 @@ export async function getCachedQuests() {
 
 export async function storeJWTToken(token) {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, JSON.stringify(token))
+    console.log("Store token: ", token)
+    await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token)
     console.log("Stored Token")
   } catch (err) {
     throw new Error(err)
