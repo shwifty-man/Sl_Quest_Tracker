@@ -46,11 +46,16 @@ export function AuthProvider({ children }) {
     // call backend, get token & user, update state
     try {
       const registerData = await fetchRegister(data)
+      
       console.log("registerData.token: ", registerData.token)
       await storeJWTToken(registerData.token)
+
       console.log("registerData.user: ", registerData.user)
       setUser(registerData.user)
       setToken(registerData.token)
+
+      await storeJWTToken(registerData.token)
+      await storeUser(registerData.user)
     } catch (err) {
       throw new Error(err)
     }

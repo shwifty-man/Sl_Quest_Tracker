@@ -4,7 +4,7 @@ import {
   TextInput,
   Pressable,
 } from "react-native"
-import { useAuth } from "../2_services/auth.service"
+import { useAuth } from "../2_services/context"
 import { useEffect, useState } from "react"
 import {styles} from '../2_services/styles'
 
@@ -23,7 +23,8 @@ const Login = ({ navigation }) => {
     try {
       await login({ email: emailValue, password: passwordValue })
     } catch (err) {
-      console.error("Login failed:", err)
+      throw new Error("Login failed:", err)
+      
     }
   }
 

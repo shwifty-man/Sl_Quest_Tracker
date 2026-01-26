@@ -13,10 +13,12 @@ export async function fetchLogin(credentials) {
           email: credentials.email,
           password: credentials.password,
         }),
-      }
+      },
     )
     if (!response.ok) {
-      throw new Error("Network response was not ok and status: " + response.status)
+      throw new Error(
+        "Network response was not ok and status: " + response.status,
+      )
     }
 
     const data = await response.json()
@@ -32,7 +34,6 @@ export async function fetchLogin(credentials) {
 
 export async function fetchRegister(credentials) {
   try {
-    console.log("Register Credentials: ", credentials)
     const response = await fetch(
       `${process.env.EXPO_PUBLIC_BACKEND_URL}/auth/register`,
       {
@@ -44,14 +45,15 @@ export async function fetchRegister(credentials) {
           email: credentials.email,
           password: credentials.password,
         }),
-      }
+      },
     )
     if (!response.ok) {
-      throw new Error("Network response was NOT ok")
+      throw new Error("Network response was NOT ok. Status: " + response.status)
     }
     const data = await response.json()
     return data
-  } catch (error) {
-    console.error("Error fetching data:", error)
+  } catch (err) {
+    console.error("Error fetching data:", err)
+    throw err
   }
 }

@@ -1,11 +1,11 @@
 import { View, Text, TextInput, Pressable, StyleSheet } from "react-native"
-import { useAuth } from "../2_services/auth.service"
+import { useAuth } from "../2_services/context"
 import { useEffect, useState } from "react"
 import { styles } from "../2_services/styles"
 
 const Register = ({ navigation }) => {
-  const [emailValue, setEmailValue] = useState("")
-  const [passwordValue, setPasswordValue] = useState("")
+  const [email, setEmailValue] = useState("")
+  const [password, setPasswordValue] = useState("")
   const { register, user } = useAuth()
 
   useEffect(() => {
@@ -16,7 +16,7 @@ const Register = ({ navigation }) => {
 
   const handleRegister = async () => {
     try {
-      await register({ email: emailValue, password: passwordValue })
+      await register({ email, password })
     } catch (err) {
       console.error("Register failed:", err)
     }
@@ -37,7 +37,7 @@ const Register = ({ navigation }) => {
       <TextInput
         aria-labelledby="labelEmail"
         style={styles.input}
-        value={emailValue}
+        value={email}
         onChangeText={setEmailValue}
       />
 
@@ -53,7 +53,7 @@ const Register = ({ navigation }) => {
         aria-labelledby="labelPassword"
         secureTextEntry
         style={styles.input}
-        value={passwordValue}
+        value={password}
         onChangeText={setPasswordValue}
       />
 
