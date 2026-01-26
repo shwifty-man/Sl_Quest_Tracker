@@ -78,4 +78,9 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  deadLine: {
+    color: "#4F7097",
+    marginTop: 6,
+    fontSize: 14,
+  },
 })

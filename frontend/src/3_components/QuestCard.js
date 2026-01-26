@@ -8,7 +8,7 @@ const QuestCard = ({ title, unit, current, target, deadLine }) => {
       <Text style={styles.questTitle}>{title}</Text>
       <Text style={styles.unit}>{unit}</Text>
       <Text style={styles.progress}>{current}/{target}</Text>
-      <Text>Time left: {deadLine}</Text>
+      <Text style={styles.deadLine}>Time left: {deadLine}</Text>
     </View>
   )
 }
