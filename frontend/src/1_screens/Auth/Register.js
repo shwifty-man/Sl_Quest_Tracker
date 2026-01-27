@@ -1,17 +1,12 @@
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-} from "react-native"
-import { useAuth } from "../2_services/context"
+import { View, Text, TextInput, Pressable, StyleSheet } from "react-native"
+import { useAuth } from "../../2_services/context"
 import { useEffect, useState } from "react"
-import {styles} from '../2_services/styles'
+import { styles } from "../../2_services/styles"
 
-const Login = ({ navigation }) => {
-  const [emailValue, setEmailValue] = useState("")
-  const [passwordValue, setPasswordValue] = useState("")
-  const { login, user } = useAuth()
+const Register = ({ navigation }) => {
+  const [email, setEmailValue] = useState("")
+  const [password, setPasswordValue] = useState("")
+  const { register, user } = useAuth()
 
   useEffect(() => {
     if (user) {
@@ -19,18 +14,17 @@ const Login = ({ navigation }) => {
     }
   }, [user])
 
-  const handleLogin = async () => {
+  const handleRegister = async () => {
     try {
-      await login({ email: emailValue, password: passwordValue })
+      await register({ email, password })
     } catch (err) {
-      throw new Error("Login failed:", err)
-      
+      console.error("Register failed:", err)
     }
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+      <Text style={styles.title}>Register</Text>
 
       <Text
         style={styles.glowLabel}
@@ -43,7 +37,7 @@ const Login = ({ navigation }) => {
       <TextInput
         aria-labelledby="labelEmail"
         style={styles.input}
-        value={emailValue}
+        value={email}
         onChangeText={setEmailValue}
       />
 
@@ -59,22 +53,22 @@ const Login = ({ navigation }) => {
         aria-labelledby="labelPassword"
         secureTextEntry
         style={styles.input}
-        value={passwordValue}
+        value={password}
         onChangeText={setPasswordValue}
       />
 
-      <Pressable style={styles.button} onPress={handleLogin}>
-        <Text>Login</Text>
+      <Pressable style={styles.button} onPress={handleRegister}>
+        <Text>Register</Text>
       </Pressable>
 
       <Pressable
         style={styles.button}
-        onPress={() => navigation.navigate("Register")}
+        onPress={() => navigation.navigate("Login")}
       >
-        <Text>Register</Text>
+        <Text>Login</Text>
       </Pressable>
     </View>
   )
 }
 
-export default Login
+export default Register

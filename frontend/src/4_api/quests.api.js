@@ -22,9 +22,29 @@ export async function fetchQuests(token) {
   return data
 }
 
-// {
-//     "questData": {"questTitle": "test1", "unitName": "unittest1", "targetValue": 100}
-// }
+export async function fetchQuestById(token, questId) {
+  const response = await fetch(
+    `${process.env.EXPO_PUBLIC_BACKEND_URL}/quests/${questId}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  )
+
+  if (!response.ok) {
+    console.error("response.json(): ", await response.text())
+    throw new Error("Failed to fetch quest " + response.status)
+  } else {
+    console.log("GET quest response was ok")
+  }
+
+  const data = await response.json()
+  console.log("GET QUEST BY ID: ", data)
+  return data
+}
 
 export async function fetchCreateQuests(token, credentials) {
   try {
@@ -45,7 +65,7 @@ export async function fetchCreateQuests(token, credentials) {
         }),
       },
     )
-
+    
     if (!response.ok) {
       if (response.status === 401) {
         // const { logout } = useAuth()
@@ -56,7 +76,7 @@ export async function fetchCreateQuests(token, credentials) {
     } else {
       console.log("Created Quest")
     }
-
+    
     const data = await response.json()
     console.log("Create Quest data: ", data)
   } catch (err) {
@@ -64,3 +84,7 @@ export async function fetchCreateQuests(token, credentials) {
     throw err
   }
 }
+
+// {
+//     "questData": {"questTitle": "test1", "unitName": "unittest1", "targetValue": 100}
+// }

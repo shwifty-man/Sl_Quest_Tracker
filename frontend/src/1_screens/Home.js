@@ -1,10 +1,7 @@
 import { Button, Text, View } from "react-native"
 import { styles } from "../2_services/styles"
-import { fetchCreateQuests, fetchQuests } from "../4_api/quests.api"
-import { STORAGE_KEYS } from "../2_services/storage"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useAuth } from "../2_services/context"
-import QuestsList from "./5_AllQuest"
+import QuestsList from "./Quest/AllQuest"
 
 const Home = ({ children }) => {
   console.log("Rendering Home")

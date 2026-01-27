@@ -1,11 +1,11 @@
 import { NavigationContainer } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
-import Register from "./src/1_screens/0_Register"
-import Login from "./src/1_screens/1_Login"
-import Home from "./src/1_screens/4_Home"
+import Register from "./src/1_screens/Auth/Register"
+import Login from "./src/1_screens/Auth/Login"
+import Home from "./src/1_screens/Home"
 import { useAuth } from "./src/2_services/context"
-import CreateQuest from "./src/1_screens/3_QuestCreate"
-import QuestsList from "./src/1_screens/5_AllQuest"
+import CreateQuest from "./src/1_screens/Quest/QuestCreate"
+import QuestsList from "./src/1_screens/Quest/AllQuest"
 
 const Stack = createNativeStackNavigator()
 
