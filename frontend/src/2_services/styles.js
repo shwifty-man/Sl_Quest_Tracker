@@ -83,4 +83,33 @@ export const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 14,
   },
+  
+})
+
+
+export const QuestDetails = StyleSheet.create({
+  detailsContent: {
+    width: "100%",
+    backgroundColor: "#092356",
+    flex: 1,
+    justifyContent: "center",
+    padding: 18,
+    borderRadius: 14,
+    marginBottom: 18,
+  },
+  sectionLabel: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  sectionLabelLeft: {
+    fontSize: 16,
+    paddingRight: 14,
+  },
+
+  sectionLabelRight: {
+    fontSize: 14,
+    paddingRight: 14,
+  },
 })
