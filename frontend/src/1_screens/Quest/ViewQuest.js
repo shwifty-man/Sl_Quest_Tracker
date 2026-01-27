@@ -5,9 +5,11 @@ import QuestCard from "../../3_components/QuestCard"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { STORAGE_KEYS } from "../../2_services/storage"
 import QuestDetailsView from "../../3_components/QuestDetailsView"
+import { useQuests } from "../../2_services/context"
 
 export default function QuestDetailPage({ route }) {
   const { questId } = route.params
+  const { updateProgress } = useQuests()
   const [quest, setQuest] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -16,7 +18,7 @@ export default function QuestDetailPage({ route }) {
     const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
       const data = await fetchQuestById(token, questId)
       setQuest(data)
-      setLoading(false)
+      setLoading(false) 
     }
     loadQuest()
   }, [])
@@ -24,7 +26,7 @@ export default function QuestDetailPage({ route }) {
   if (loading) return <ActivityIndicator size="large" />
 
   return (
-    <View style={{flex: 1}}>
+    <View style={{ flex: 1 }}>
       <QuestDetailsView
         title={quest.title}
         unit={quest.unit}
@@ -33,6 +35,8 @@ export default function QuestDetailPage({ route }) {
         deadLine={quest.deadline}
         status={quest.status}
         exp={quest.exp_reward}
+        questId={quest.id}
+        updateProgress={updateProgress}
       />
     </View>
   )
