@@ -1,4 +1,5 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet } from "react-native"
+import { Text } from "react-native"
 
 export const styles = StyleSheet.create({
   container: {
@@ -83,9 +84,7 @@ export const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 14,
   },
-  
 })
-
 
 export const QuestDetails = StyleSheet.create({
   detailsContent: {
@@ -93,9 +92,13 @@ export const QuestDetails = StyleSheet.create({
     backgroundColor: "#092356",
     flex: 1,
     justifyContent: "center",
-    padding: 18,
+    padding: 20,
     borderRadius: 14,
     marginBottom: 18,
+  },
+  questUnits: {
+    marginBottom: 20,
+    padding: 2
   },
   sectionLabel: {
     flexDirection: "row",
@@ -111,14 +114,62 @@ export const QuestDetails = StyleSheet.create({
 
   sectionLabelRight: {
     fontSize: 14,
-    paddingRight: 14,
+    paddingRight: 1,
     color: "#ffffff",
   },
   questTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#62D5F8",
-    marginBottom: 5,
+    marginBottom: 50,
     alignSelf: "center",
   },
+  progressContainer: {
+    // NEW
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  arrowColumn: {
+    // NEW
+    marginLeft: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 })
+
+export const text = StyleSheet.create({
+  normal: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    width: "50%",
+    alignSelf: "center",
+  },
+
+  dummyText: {
+    color: "#4F7097",
+  },
+
+  small: {
+    // NEW
+    color: "#CCCCCC",
+    fontSize: 13,
+  },
+
+  warning: {
+    // NEW
+    color: "#FF4C4C",
+    fontWeight: "bold",
+  },
+
+  success: {
+    // NEW
+    color: "#4CFF88",
+    fontWeight: "600",
+  },
+})
+
+
+export default function Warning({text}) {
+  return <Text style={{ color: "red", fontWeight: "bold" }}>{text}</Text>
+}
