@@ -1,18 +1,40 @@
-import React from "react"
-import { View, Text } from "react-native"
-import { styles, QuestDetails } from "../2_services/styles"
-import { formatDeadline } from "../2_services/timeUtils"
+import { View, Text, TextInput } from "react-native"
+import Warning, { styles, QuestDetails, text } from "../2_services/styles"
 import Countdown from "./CountDown"
+import { useState } from "react"
+import TriangleButton from "./triangleButton"
 
-export default function QuestDetailsView({
-  title,
-  unit,
-  current,
-  target,
-  deadLine,
-  status,
-  exp,
-}) {
+export default function QuestDetailsView(
+  {
+    title,
+    unit,
+    current,
+    target,
+    deadLine,
+    status,
+    exp,
+    questId,
+    updateProgress,
+  }) {
+  const [newValue, setNewValue] = useState(current)
+
+
+  async function handleUpdatingProgressUp() {
+    setNewValue((prev) => {
+      const updated = prev + 1
+      updateProgress(questId, updated)
+      return updated
+    })
+  }
+
+    async function handleUpdatingProgressDown() {
+      setNewValue((prev) => {
+        const updated = prev - 1
+        updateProgress(questId, updated)
+        return updated
+      })
+    }
+
 
   return (
     <View style={styles.container}>
@@ -21,19 +43,37 @@ export default function QuestDetailsView({
           <Text style={QuestDetails.questTitle}>{title}</Text>
         </View>
 
-        <View style={QuestDetails.sectionCard}>
+        <View style={QuestDetails.questUnits}>
           <View style={QuestDetails.sectionLabel}>
             <Text style={QuestDetails.sectionLabelLeft}>{unit}</Text>
-            <Text style={QuestDetails.sectionLabelRight}>
-              {current} / {target}
-            </Text>
-          </View>
-          <View style={QuestDetails.sectionCard}>
-            <View style={QuestDetails.sectionLabel}>
-              <Text>Time left: </Text>
-              <Countdown deadline={deadLine} />
+
+            <View style={QuestDetails.progressContainer}>
+              <Text style={QuestDetails.sectionLabelRight}>
+                {newValue} / {target}
+              </Text>
+
+              <View style={QuestDetails.arrowColumn}>
+                <TriangleButton
+                  direction="up"
+                  onPress={handleUpdatingProgressUp}
+                />
+                <TriangleButton
+                  direction="down"
+                  onPress={handleUpdatingProgressDown}
+                />
+              </View>
             </View>
           </View>
+          <Text style={text.dummyText}>
+            Time left: <Countdown deadline={deadLine} />
+          </Text>
+        </View>
+
+        <View>
+          <Text style={text.normal}>
+            Caution: Failure to complete the daily quest will result in an
+            appropriate <Warning text="Penalty" />.
+          </Text>
         </View>
       </View>
     </View>
