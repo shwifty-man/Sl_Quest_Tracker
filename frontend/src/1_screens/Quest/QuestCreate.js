@@ -17,6 +17,7 @@ const CreateQuest = ({ navigation }) => {
 
   async function handleQuestCreation() {
     await questCreation(questTitle, unitName, targetValue)
+    navigation.navigate("Home")
   }
 
   return (
