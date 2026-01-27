@@ -7,6 +7,7 @@ import { useAuth } from "./src/2_services/context"
 import CreateQuest from "./src/1_screens/Quest/QuestCreate"
 import QuestsList from "./src/1_screens/Quest/AllQuest"
 import QuestDetailPage from "./src/1_screens/Quest/ViewQuest"
+import QuestDetailsView from "./src/3_components/QuestDetailsView"
 
 const Stack = createNativeStackNavigator()
 
@@ -26,6 +27,7 @@ function AppStack() {
       <Stack.Screen name="QuestCreate" component={CreateQuest} />
       <Stack.Screen name="QuestsList" component={QuestsList} />
       <Stack.Screen name="QuestDetails" component={QuestDetailPage} />
+      <Stack.Screen name="QuestDetailsView" component={QuestDetailsView} />
     </Stack.Navigator>
   )
 }
