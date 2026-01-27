@@ -2,8 +2,10 @@ import { Button, Text, View } from "react-native"
 import { styles } from "../2_services/styles"
 import { useAuth } from "../2_services/context"
 import QuestsList from "./Quest/AllQuest"
+import { useNavigation } from "@react-navigation/native"
 
 const Home = ({ children }) => {
+    const navigation = useNavigation()
   console.log("Rendering Home")
   const { logout } = useAuth()
 
@@ -19,7 +21,11 @@ const Home = ({ children }) => {
     <View style={styles.container}>
       <Text style={styles.title}>Home</Text>
       <Button title="Logout" onPress={handleLogout}></Button>
-      <View style={{flex:1}}>
+      <Button
+        title="Create Quest"
+        onPress={() => navigation.navigate("QuestCreate")}
+      ></Button>
+      <View style={{ flex: 1 }}>
         <QuestsList />
       </View>
     </View>
