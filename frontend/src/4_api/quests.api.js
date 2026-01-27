@@ -11,7 +11,6 @@ export async function fetchQuests(token) {
   )
 
   if (!response.ok) {
-    console.error("response.json(): ", await response.text())
     throw new Error("Failed to fetch quests " + response.status)
   } else {
     console.log("GET quest response was ok")
@@ -35,7 +34,6 @@ export async function fetchQuestById(token, questId) {
   )
 
   if (!response.ok) {
-    console.error("response.json(): ", await response.text())
     throw new Error("Failed to fetch quest " + response.status)
   } else {
     console.log("GET quest response was ok")
@@ -65,7 +63,7 @@ export async function fetchCreateQuests(token, credentials) {
         }),
       },
     )
-    
+
     if (!response.ok) {
       if (response.status === 401) {
         // const { logout } = useAuth()
@@ -76,7 +74,7 @@ export async function fetchCreateQuests(token, credentials) {
     } else {
       console.log("Created Quest")
     }
-    
+
     const data = await response.json()
     console.log("Create Quest data: ", data)
     return data
@@ -89,3 +87,40 @@ export async function fetchCreateQuests(token, credentials) {
 // {
 //     "questData": {"questTitle": "test1", "unitName": "unittest1", "targetValue": 100}
 // }
+
+export async function fetchUpdateProgress(token, questId, newValue) {
+  try {
+    console.log("New Value: ", newValue)
+
+    const currentValue = Number(newValue)
+    if (isNaN(currentValue)) throw new Error("Invalid quest value")
+    console.log("currentValue: ", currentValue)
+
+    const response = await fetch(
+      `${process.env.EXPO_PUBLIC_BACKEND_URL}/quests/${questId}/update`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ currentValue }),
+      },
+    )
+
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      if (response.status === 401) throw new Error("Unauthorized")
+      throw new Error(data?.message || "Failed to update quest")
+    } else {
+      console.log("Updated Quest")
+    }
+
+    console.log("UPDATE data: ", data.current_value)
+    return data.current_value
+  } catch (err) {
+    console.log("fetchUpdateProgress: Error:", err)
+    throw err
+  }
+}
