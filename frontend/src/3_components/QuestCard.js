@@ -2,7 +2,6 @@ import React from "react"
 import { View, Text, Pressable } from "react-native"
 import { styles } from "../2_services/styles"
 import { useNavigation } from "@react-navigation/native"
-import QuestDetailPage from "../1_screens/Quest/ViewQuest"
 import Countdown from "./CountDown"
 
 const QuestCard = ({ id, title, unit, current, target, deadLine }) => {

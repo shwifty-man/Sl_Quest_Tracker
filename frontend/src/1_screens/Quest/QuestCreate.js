@@ -1,8 +1,5 @@
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useState } from "react"
 import { View, Text, TextInput, Button, Pressable } from "react-native"
-import { STORAGE_KEYS } from "../../2_services/storage"
-import { fetchCreateQuests } from "../../4_api/quests.api"
 import { styles } from "../../2_services/styles"
 import { useQuests } from "../../2_services/context"
 
