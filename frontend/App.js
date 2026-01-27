@@ -6,6 +6,7 @@ import Home from "./src/1_screens/Home"
 import { useAuth } from "./src/2_services/context"
 import CreateQuest from "./src/1_screens/Quest/QuestCreate"
 import QuestsList from "./src/1_screens/Quest/AllQuest"
+import QuestDetailPage from "./src/1_screens/Quest/ViewQuest"
 
 const Stack = createNativeStackNavigator()
 
@@ -21,9 +22,10 @@ function AuthStack() {
 function AppStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="QuestCreate" component={CreateQuest} />
       <Stack.Screen name="Home" component={Home} />
+      <Stack.Screen name="QuestCreate" component={CreateQuest} />
       <Stack.Screen name="QuestsList" component={QuestsList} />
+      <Stack.Screen name="QuestDetails" component={QuestDetailPage} />
     </Stack.Navigator>
   )
 }
