@@ -106,10 +106,19 @@ export const QuestDetails = StyleSheet.create({
   sectionLabelLeft: {
     fontSize: 16,
     paddingRight: 14,
+    color: "#ffffff",
   },
 
   sectionLabelRight: {
     fontSize: 14,
     paddingRight: 14,
+    color: "#ffffff",
+  },
+  questTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#62D5F8",
+    marginBottom: 5,
+    alignSelf: "center",
   },
 })
