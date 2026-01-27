@@ -18,7 +18,7 @@ export default function QuestDetailsView({
     <View style={styles.container}>
       <View style={QuestDetails.detailsContent}>
         <View style={QuestDetails.sectionCard}>
-          <Text style={styles.questTitle}>{title}</Text>
+          <Text style={QuestDetails.questTitle}>{title}</Text>
         </View>
 
         <View style={QuestDetails.sectionCard}>
