@@ -79,6 +79,7 @@ export async function fetchCreateQuests(token, credentials) {
     
     const data = await response.json()
     console.log("Create Quest data: ", data)
+    return data
   } catch (err) {
     console.log("fetchCreateQuests: Error:", err)
     throw err
