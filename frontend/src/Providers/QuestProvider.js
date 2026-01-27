@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from "react"
-import { fetchCreateQuests, fetchQuestById, fetchQuests } from "../4_api/quests.api"
+import { fetchCreateQuests, fetchQuestById, fetchQuests, fetchUpdateProgress } from "../4_api/quests.api"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import {
   getCachedQuests,
@@ -66,6 +66,19 @@ export function QuestProvider({ children }) {
     }
   }
 
+  const updateProgress = async (questId, newValue) => {
+    try {
+      setIsLoading(true)
+      const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
+      const newVal = await fetchUpdateProgress(token, questId, newValue)
+      console.log("New Value: ", newVal)
+      return newVal
+    } catch (err) {
+      console.log("Error Updating quest: ", err)
+      throw err
+    }
+  }
+
   const restoreQuests = async () => {
     // restore quests
     await getCachedQuests()
@@ -87,6 +100,7 @@ export function QuestProvider({ children }) {
         getQuests,
         getQuestById,
         questCreation,
+        updateProgress,
       }}
     >
       {children}
