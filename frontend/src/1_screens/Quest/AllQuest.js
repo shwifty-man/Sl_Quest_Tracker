@@ -7,7 +7,7 @@ const QuestsList = () => {
   console.log("Rendering QuestsList")
   const { quests, isLoading } = useQuests()
 
-  if (isLoading) return <Text>Loading...</Text>
+  if (isLoading) return <Text style={styles.empty}>Loading...</Text>
 
   return (
     <View style={styles.container}>
@@ -25,7 +25,8 @@ const QuestsList = () => {
               unit={item.unit}
               current={item.current_value}
               target={item.target_value}
-              deadLine={item.deadline} 
+              deadLine={item.deadline}
+              status={item.status}
             />
           )
         }}
