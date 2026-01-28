@@ -90,8 +90,6 @@ export async function fetchCreateQuests(token, credentials) {
 
 export async function fetchUpdateProgress(token, questId, newValue) {
   try {
-    console.log("New Value: ", newValue)
-
     const currentValue = Number(newValue)
     if (isNaN(currentValue)) throw new Error("Invalid quest value")
     console.log("currentValue: ", currentValue)
@@ -116,9 +114,8 @@ export async function fetchUpdateProgress(token, questId, newValue) {
     } else {
       console.log("Updated Quest")
     }
-
-    console.log("UPDATE data: ", data.current_value)
-    return data.current_value
+    console.log("UPDATE data: ", data.quest)
+    return data.quest
   } catch (err) {
     console.log("fetchUpdateProgress: Error:", err)
     throw err
