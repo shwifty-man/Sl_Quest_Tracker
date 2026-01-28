@@ -33,7 +33,7 @@ export function getTimeLeft(isoString) {
   const deadline = new Date(isoString)
   let diff = deadline - now // difference in milliseconds
 
-  if (diff <= 0) return "Failed"
+  if (diff <= 0) return "None"
 
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
   diff -= days * (1000 * 60 * 60 * 24)

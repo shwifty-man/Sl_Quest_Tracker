@@ -78,6 +78,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    color: "#9FDAEF",
   },
   deadLine: {
     color: "#4F7097",
