@@ -33,6 +33,7 @@ export function QuestProvider({ children }) {
     const getQuestById = async (questId) => {
       try {
         setIsLoading(true)
+        console.log("Starting to get all Quests")
         const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
         const quest = await fetchQuestById(token, questId)
         setQuests(quest)
@@ -71,11 +72,17 @@ export function QuestProvider({ children }) {
       setIsLoading(true)
       const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
       const newVal = await fetchUpdateProgress(token, questId, newValue)
+
+      setQuests((prev) => prev.map((q) => (q.id === newVal.id ? newVal : q)))
+
       console.log("New Value: ", newVal)
+
       return newVal
     } catch (err) {
       console.log("Error Updating quest: ", err)
       throw err
+    } finally {
+      setIsLoading(false)
     }
   }
 
