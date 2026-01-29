@@ -1,46 +1,46 @@
 import { View, Text, TextInput } from "react-native"
 import Warning, { styles, QuestDetails, text } from "../2_services/styles"
 import Countdown from "./CountDown"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import TriangleButton from "./triangleButton"
 
-export default function QuestDetailsView(
-  {
-    title,
-    unit,
-    current,
-    target,
-    deadLine,
-    status,
-    exp,
-    questId,
-    updateProgress,
-  }) {
-  const [newValue, setNewValue] = useState(current)
+export default function QuestDetailsView({
+  title,
+  unit,
+  current,
+  target,
+  deadLine,
+  status,
+  exp,
+  questId,
+  setNewValue,
+}) {
+  const [newValue, setLocalValue] = useState(current)
+
+  useEffect(() => {
+    setLocalValue(current)
+  }, [current])
 
 
   async function handleUpdatingProgressUp() {
-    setNewValue((prev) => {
-      const updated = prev + 1
-      updateProgress(questId, updated)
-      return updated
-    })
+    const updated = newValue + 1
+    setLocalValue(updated)
+    setNewValue(updated)
   }
 
-    async function handleUpdatingProgressDown() {
-      setNewValue((prev) => {
-        const updated = prev - 1
-        updateProgress(questId, updated)
-        return updated
-      })
-    }
-
+  async function handleUpdatingProgressDown() {
+    if (newValue <= 0) return
+    const updated = newValue - 1
+    setLocalValue(updated)
+    setNewValue(updated)
+  }
 
   return (
     <View style={styles.container}>
       <View style={QuestDetails.detailsContent}>
         <View style={QuestDetails.sectionCard}>
           <Text style={QuestDetails.questTitle}>{title}</Text>
+          <Text style={QuestDetails.questTitle}>Status: {status}</Text>
         </View>
 
         <View style={QuestDetails.questUnits}>
