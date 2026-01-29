@@ -4,7 +4,7 @@ import { styles } from "../2_services/styles"
 import { useNavigation } from "@react-navigation/native"
 import Countdown from "./CountDown"
 
-const QuestCard = ({ id, title, unit, current, target, deadLine }) => {
+const QuestCard = ({ id, title, unit, status, current, target, deadLine }) => {
   const navigation = useNavigation()
 
   function handleViewingQuest() {
@@ -25,6 +25,7 @@ const QuestCard = ({ id, title, unit, current, target, deadLine }) => {
         <Text style={styles.deadLine}>
           Time left: {<Countdown deadline={deadLine} />}
         </Text>
+        <Text style={styles.progress}>Status: {status}</Text>
       </Pressable>
     </View>
   )
