@@ -1,5 +1,11 @@
 import React, { createContext, useState, useEffect } from "react"
-import { fetchCreateQuests, fetchQuestById, fetchQuests, fetchUpdateProgress } from "../4_api/quests.api"
+import {
+  fetchCreateQuests,
+  fetchPenaltyForQuest,
+  fetchQuestById,
+  fetchQuests,
+  fetchUpdateProgress,
+} from "../4_api/quests.api"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import {
   getCachedQuests,
@@ -30,21 +36,21 @@ export function QuestProvider({ children }) {
     }
   }
 
-    const getQuestById = async (questId) => {
-      try {
-        setIsLoading(true)
-        console.log("Starting to get all Quests")
-        const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
-        const quest = await fetchQuestById(token, questId)
-        setQuests(quest)
-        await setCachedQuests(quest)
-        return quest
-      } catch (err) {
-        throw err
-      } finally {
-        setIsLoading(false)
-      }
+  const getQuestById = async (questId) => {
+    try {
+      setIsLoading(true)
+      console.log("Starting to get all Quests")
+      const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
+      const quest = await fetchQuestById(token, questId)
+      setQuests(quest)
+      await setCachedQuests(quest)
+      return quest
+    } catch (err) {
+      throw err
+    } finally {
+      setIsLoading(false)
     }
+  }
 
   const questCreation = async (questTitle, unitName, targetValue) => {
     try {
@@ -86,10 +92,17 @@ export function QuestProvider({ children }) {
     }
   }
 
-  const restoreQuests = async () => {
-    // restore quests
-    await getCachedQuests()
-  }
+  const getQuestPenalty = React.useCallback(async () => {
+    try {
+      const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
+      const penalty = await fetchPenaltyForQuest(token)
+
+      return penalty || null
+    } catch (err) {
+      console.log("Error fetching quest penalty:", err)
+      return null
+    }
+  }, [])
 
   useEffect(() => {
     async function loadQuests() {
@@ -108,6 +121,7 @@ export function QuestProvider({ children }) {
         getQuestById,
         questCreation,
         updateProgress,
+        getQuestPenalty,
       }}
     >
       {children}
