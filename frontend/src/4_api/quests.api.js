@@ -84,10 +84,6 @@ export async function fetchCreateQuests(token, credentials) {
   }
 }
 
-// {
-//     "questData": {"questTitle": "test1", "unitName": "unittest1", "targetValue": 100}
-// }
-
 export async function fetchUpdateProgress(token, questId, newValue) {
   try {
     const currentValue = Number(newValue)
@@ -118,6 +114,35 @@ export async function fetchUpdateProgress(token, questId, newValue) {
     return data.quest
   } catch (err) {
     console.log("fetchUpdateProgress: Error:", err)
+    throw err
+  }
+}
+
+export async function fetchPenaltyForQuest(token) {
+  try {
+    const response = await fetch(
+      `${process.env.EXPO_PUBLIC_BACKEND_URL}/penalties/active`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "Cache-Control": "no-cache",
+        },
+      },
+    )
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch penalty " + response.status)
+    } else {
+      console.log("GET penalty response was ok")
+    }
+
+    const data = await response.json()
+    console.log("GET PENALTY DATA: ", data)
+    return data
+  } catch (err) {
+    console.log("fetchPenaltyForQuest: Error:", err)
     throw err
   }
 }
