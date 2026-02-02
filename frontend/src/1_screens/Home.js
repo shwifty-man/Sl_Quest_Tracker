@@ -3,11 +3,25 @@ import { styles } from "../2_services/styles"
 import { useAuth } from "../2_services/context"
 import QuestsList from "./Quest/AllQuest"
 import { useNavigation } from "@react-navigation/native"
+import { useEffect } from "react"
+import { getCurrentApp, startAppWatcherService } from "../2_services/getInstalledApps"
 
 const Home = ({ children }) => {
     const navigation = useNavigation()
   console.log("Rendering Home")
   const { logout } = useAuth()
+
+useEffect(() => {
+  startAppWatcherService()
+  const timeoutId = setTimeout(() => {
+    const intervalId = setInterval(getCurrentApp, 3000)
+    return () => clearInterval(intervalId)
+  }, 4000)
+  return () => clearTimeout(timeoutId)
+}, [])
+
+
+  
 
   async function handleLogout() {
     try {
