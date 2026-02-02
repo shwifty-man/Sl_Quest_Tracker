@@ -2,60 +2,79 @@ package com.devtim08.System
 
 import android.os.Build
 import android.os.Bundle
-
+import android.content.Intent
+import android.provider.Settings
+import android.app.AppOpsManager
+import android.content.Context
+import android.os.Process
+import android.util.Log
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
-
 import expo.modules.ReactActivityDelegateWrapper
 
 class MainActivity : ReactActivity() {
-  override fun onCreate(savedInstanceState: Bundle?) {
-    // Set the theme to AppTheme BEFORE onCreate to support
-    // coloring the background, status bar, and navigation bar.
-    // This is required for expo-splash-screen.
-    setTheme(R.style.AppTheme);
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+    setTheme(R.style.AppTheme)
     super.onCreate(null)
-  }
 
-  /**
-   * Returns the name of the main component registered from JavaScript. This is used to schedule
-   * rendering of the component.
-   */
-  override fun getMainComponentName(): String = "main"
+    if (!hasUsageStatsPermission(this)) {
+        // Open settings, wait for user to grant permission
+        startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+    } else {
+        startAppWatcherService()
+    }
+}
 
-  /**
-   * Returns the instance of the [ReactActivityDelegate]. We use [DefaultReactActivityDelegate]
-   * which allows you to enable New Architecture with a single boolean flags [fabricEnabled]
-   */
-  override fun createReactActivityDelegate(): ReactActivityDelegate {
-    return ReactActivityDelegateWrapper(
-          this,
-          BuildConfig.IS_NEW_ARCHITECTURE_ENABLED,
-          object : DefaultReactActivityDelegate(
-              this,
-              mainComponentName,
-              fabricEnabled
-          ){})
-  }
+private fun startAppWatcherService() {
+    val serviceIntent = Intent(this, AppWatcherService::class.java)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        startForegroundService(serviceIntent)
+    } else {
+        startService(serviceIntent)
+    }
+}
 
-  /**
-    * Align the back button behavior with Android S
-    * where moving root activities to background instead of finishing activities.
-    * @see <a href="https://developer.android.com/reference/android/app/Activity#onBackPressed()">onBackPressed</a>
-    */
-  override fun invokeDefaultOnBackPressed() {
-      if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
-          if (!moveTaskToBack(false)) {
-              // For non-root activities, use the default implementation to finish them.
-              super.invokeDefaultOnBackPressed()
-          }
-          return
-      }
 
-      // Use the default back button implementation on Android S
-      // because it's doing more than [Activity.moveTaskToBack] in fact.
-      super.invokeDefaultOnBackPressed()
-  }
+    override fun getMainComponentName(): String = "main"
+
+    override fun createReactActivityDelegate(): ReactActivityDelegate {
+        return ReactActivityDelegateWrapper(
+            this,
+            BuildConfig.IS_NEW_ARCHITECTURE_ENABLED,
+            object : DefaultReactActivityDelegate(
+                this,
+                mainComponentName,
+                fabricEnabled
+            ) {}
+        )
+    }
+
+    override fun invokeDefaultOnBackPressed() {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
+            if (!moveTaskToBack(false)) {
+                super.invokeDefaultOnBackPressed()
+            }
+            return
+        }
+        super.invokeDefaultOnBackPressed()
+    }
+
+    // Kotlin version of Usage Stats permission check
+    private fun hasUsageStatsPermission(context: Context): Boolean {
+        return try {
+            val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+            val mode = appOps.checkOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                Process.myUid(),
+                context.packageName
+            )
+            mode == AppOpsManager.MODE_ALLOWED
+        } catch (e: Exception) {
+            Log.w("WATCHER", "Permission check failed", e)
+            false
+        }
+    }
 }
