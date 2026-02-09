@@ -4,7 +4,7 @@ import { useAuth } from "../2_services/context"
 import QuestsList from "./Quest/AllQuest"
 import { useNavigation } from "@react-navigation/native"
 import { useEffect } from "react"
-import { startAppWatcherService } from "../2_services/getInstalledApps"
+import { startAppWatcherService } from "../2_services/handleOverlay"
 
 const Home = ({ children }) => {
   const navigation = useNavigation()
