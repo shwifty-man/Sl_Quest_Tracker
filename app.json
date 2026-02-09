@@ -1,0 +1,8 @@
+{
+  "android": {
+    "package": "com.devtim08.system"
+  },
+  "ios": {
+    "bundleIdentifier": "com.devtim08.system"
+  }
+}
