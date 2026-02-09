@@ -12,6 +12,7 @@ import {
   setCachedQuests,
   STORAGE_KEYS,
 } from "../2_services/storage"
+import EventSource from "react-native-sse"
 
 export const QuestContext = createContext()
 
@@ -19,6 +20,47 @@ export function QuestProvider({ children }) {
   // 2a. State for user, token, and loading
   const [quests, setQuests] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+  useEffect(() => {
+    let sse
+
+    async function connectToSSE() {
+      const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
+      if (!token) return
+
+      // Load quests first
+      await getQuests()
+
+      sse = new EventSource(
+        `${process.env.EXPO_PUBLIC_BACKEND_URL}/events?token=${token}`,
+      )
+
+      sse.addEventListener("connected", () => console.log("SSE connected"))
+
+      sse.addEventListener("penalty_applied", (event) => {
+        const data = JSON.parse(event.data)
+        console.log("Penalty applied:", data)
+
+        setQuests((prev) => {
+          const exists = prev.some((q) => q.id === data.questId)
+          if (exists) {
+            return prev.map((q) =>
+              q.id === data.questId ? { ...q, status: data.status } : q,
+            )
+          }
+          return [...prev, data]
+        })
+      })
+
+      sse.addEventListener("error", (err) => console.warn("SSE error", err))
+    }
+
+    connectToSSE()
+
+    return () => {
+      console.log("Closing sse")
+      if (sse) sse.close()
+    }
+  }, [])
 
   const getQuests = async () => {
     // Get all quests
