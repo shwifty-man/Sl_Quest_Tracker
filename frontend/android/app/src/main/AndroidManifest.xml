@@ -1,10 +1,15 @@
+<!-- REQUIRED FOR OVERLAY: AndroidManifest declares OverlayService, SYSTEM_ALERT_WINDOW permission, and foreground service permissions -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <uses-permission android:name="android.permission.INTERNET"/>
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+  <!-- REQUIRED FOR OVERLAY: Permission to draw system alert window overlay -->
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
   <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
+  <!-- REQUIRED FOR OVERLAY: Permission to get running tasks for app detection -->
+  <uses-permission android:name="android.permission.GET_TASKS"/>
+  <!-- REQUIRED FOR OVERLAY: Permissions for foreground service that runs the overlay -->
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
 
@@ -23,6 +28,15 @@
     android:exported="false"
     android:enabled="true"
     android:foregroundServiceType="specialUse" />
+  <!-- REQUIRED FOR OVERLAY: Service that manages the overlay window display -->
+  <service
+    android:name=".OverlayService"
+    android:foregroundServiceType="specialUse"
+    android:exported="false">
+    <property
+      android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+      android:value="App blocking overlay for penalty system"/>
+  </service>
 
     <meta-data android:name="expo.modules.updates.ENABLED" android:value="false"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"/>

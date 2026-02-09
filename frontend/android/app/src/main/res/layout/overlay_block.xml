@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/overlayRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#DD000000">
+
+    <LinearLayout
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:background="#FF1a1a1a"
+        android:elevation="16dp"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/blockTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="App Blocked"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/blockReason"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Penalty is active"
+            android:textColor="#CCCCCC"
+            android:layout_marginTop="8dp"/>
+
+    </LinearLayout>
+
+</FrameLayout>

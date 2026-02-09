@@ -1,4 +1,6 @@
+// REQUIRED FOR OVERLAY: MainApplication registers OverlayPackage to enable overlay functionality
 package com.devtim08.System
+import com.devtim08.System.OverlayPackage
 
 import android.app.Application
 import android.content.res.Configuration
@@ -24,6 +26,7 @@ class MainApplication : Application(), ReactApplication {
 override fun getPackages(): List<ReactPackage> =
     PackageList(this).packages.apply {
         add(com.devtim08.System.AppWatcherPackage())
+        add(OverlayPackage())
     }
 
 

@@ -4,24 +4,18 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
-import android.app.usage.UsageStats;
+import android.app.usage.UsageEvents;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
-import java.util.List;
-
 public class AppWatcherService extends Service {
 
-    private Handler handler;
-    private Runnable checkRunnable;
     private Thread monitorThread;
     private volatile boolean isRunning = true;
     private static String currentForegroundApp = "";
@@ -81,7 +75,8 @@ public class AppWatcherService extends Service {
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_LOW);
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, channelName,
+                    NotificationManager.IMPORTANCE_LOW);
             manager.createNotificationChannel(channel);
         }
 
@@ -99,27 +94,35 @@ public class AppWatcherService extends Service {
         long endTime = System.currentTimeMillis();
         long startTime = endTime - 1000 * 60 * 60; // last hour
 
-        List<UsageStats> usageStatsList = usm.queryUsageStats(UsageStatsManager.INTERVAL_BEST, startTime, endTime);
-        if (usageStatsList == null) {
-            Log.d("WATCHER", "usageStatsList is null! Permission may not be granted.");
-            return;
-        } else if (usageStatsList.isEmpty()) {
-            Log.d("WATCHER", "usageStatsList is empty!");
-            return;
-        } else {
-            Log.d("WATCHER", "Got " + usageStatsList.size() + " usage stats");
-        }
-
-        UsageStats recentApp = null;
-        for (UsageStats app : usageStatsList) {
-            if (recentApp == null || app.getLastTimeUsed() > recentApp.getLastTimeUsed()) {
-                recentApp = app;
+        // Prefer latest foreground event (more accurate for launcher/home)
+        String eventForegroundApp = null;
+        UsageEvents events = usm.queryEvents(startTime, endTime);
+        UsageEvents.Event event = new UsageEvents.Event();
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event);
+            int type = event.getEventType();
+            if (type == UsageEvents.Event.MOVE_TO_FOREGROUND
+                    || type == UsageEvents.Event.ACTIVITY_RESUMED) {
+                eventForegroundApp = event.getPackageName();
             }
         }
 
-        if (recentApp != null) {
-            currentForegroundApp = recentApp.getPackageName();
-            Log.d("WATCHER", "Foreground app: " + currentForegroundApp);
+        if (eventForegroundApp != null) {
+            String newForegroundApp = eventForegroundApp;
+            Log.d("WATCHER", "UsageEvents top app: " + newForegroundApp + " (current: " + currentForegroundApp + ")");
+
+            // Only emit event if app has changed
+            if (!newForegroundApp.equals(currentForegroundApp)) {
+                currentForegroundApp = newForegroundApp;
+                Log.d("WATCHER", "Foreground app changed to: " + currentForegroundApp);
+                // Emit event to React Native
+                com.facebook.react.bridge.ReactApplicationContext reactContext = AppWatcherServiceModule
+                        .getReactContext();
+                if (reactContext != null) {
+                    Log.d("WATCHER", "Emitting onAppChanged event");
+                    AppWatcherServiceModule.emitAppChangedEvent(reactContext, currentForegroundApp);
+                }
+            }
         }
     }
 }
