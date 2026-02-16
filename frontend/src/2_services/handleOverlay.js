@@ -5,7 +5,7 @@ import {
   NativeEventEmitter,
   AppState,
 } from "react-native"
-import { isAnyPenaltyActive } from "./penaltyUtils"
+import { getActivePenalty, isAnyPenaltyActive } from "./penaltyUtils"
 
 const { AppWatcherServiceModule, OverlayModule } = NativeModules
 
@@ -17,12 +17,43 @@ console.log(
 )
 console.log("===========================")
 
-const blockedApps = ["app.revanced.android.youtube"]
+const blockedApps = ["com.google.android.youtube"]
+console.log("blockedApps: ", blockedApps)
 let eventListener = null
 let emitter = null
 let currentOverlayApp = null // Track which app currently has overlay displayed
 let currentPackageName = null
-let appChangeSeq = 0
+
+const parseEndsAtMillis = (penalty) => {
+  const raw = penalty?.ends_at || penalty?.endsAt || penalty?.endsAtIso
+  if (!raw) return 0
+  const millis = Date.parse(raw)
+  return Number.isNaN(millis) ? 0 : millis
+}
+
+const syncPenaltyState = async () => {
+  try {
+    const penalty = await getActivePenalty()
+    const penaltyActive = penalty?.active === true
+    const endsAtMillis = parseEndsAtMillis(penalty)
+    if (AppWatcherServiceModule?.setPenaltyActive) {
+      AppWatcherServiceModule.setPenaltyActive(!!penaltyActive)
+    }
+    if (AppWatcherServiceModule?.setPenaltyEndsAtMillis) {
+      AppWatcherServiceModule.setPenaltyEndsAtMillis(endsAtMillis)
+    }
+    return penaltyActive
+  } catch (error) {
+    console.warn("[OVERLAY] Failed to sync penalty state:", error)
+    if (AppWatcherServiceModule?.setPenaltyActive) {
+      AppWatcherServiceModule.setPenaltyActive(false)
+    }
+    if (AppWatcherServiceModule?.setPenaltyEndsAtMillis) {
+      AppWatcherServiceModule.setPenaltyEndsAtMillis(0)
+    }
+    return false
+  }
+}
 
 // Function to manually close overlay (called when user taps close button)
 export const closeOverlay = () => {
@@ -93,6 +124,12 @@ export const startAppWatcherService = async () => {
   if (Platform.OS === "android") {
     AppWatcherServiceModule.startService()
 
+    if (AppWatcherServiceModule.setRestrictedApps) {
+      AppWatcherServiceModule.setRestrictedApps(blockedApps)
+    }
+
+    await syncPenaltyState()
+
     // Initial listener setup
     setupEventListener()
 
@@ -100,6 +137,7 @@ export const startAppWatcherService = async () => {
     const subscription = AppState.addEventListener("change", (nextState) => {
       if (nextState === "active") {
         setupEventListener()
+        syncPenaltyState()
       } else {
         if (OverlayModule && currentOverlayApp !== null) {
           console.log("[OVERLAY-HIDE] App inactive/background - hiding overlay")
@@ -124,7 +162,6 @@ export const startAppWatcherService = async () => {
 
 // Handle app change events
 export const onAppChanged = async (packageName) => {
-  const seq = ++appChangeSeq
   currentPackageName = packageName
 
   if (!packageName) {
@@ -148,8 +185,16 @@ export const onAppChanged = async (packageName) => {
     return
   }
 
-  const penaltyActive = await isAnyPenaltyActive()
-  if (seq !== appChangeSeq || currentPackageName !== packageName) {
+  const penalty = await getActivePenalty()
+  const penaltyActive = penalty?.active === true
+  const endsAtMillis = parseEndsAtMillis(penalty)
+  if (AppWatcherServiceModule?.setPenaltyActive) {
+    AppWatcherServiceModule.setPenaltyActive(!!penaltyActive)
+  }
+  if (AppWatcherServiceModule?.setPenaltyEndsAtMillis) {
+    AppWatcherServiceModule.setPenaltyEndsAtMillis(endsAtMillis)
+  }
+  if (currentPackageName !== packageName) {
     console.log(
       "[APP-CHANGE] Stale app change ignored:",
       packageName,
@@ -177,7 +222,16 @@ export const onAppChanged = async (packageName) => {
       typeof OverlayModule?.showOverlay,
     )
     try {
-      const result = OverlayModule.showOverlay()
+      const hasPermission = await OverlayModule.checkOverlayPermission()
+      if (!hasPermission) {
+        console.warn("[OVERLAY] Permission missing, requesting...")
+        OverlayModule.requestOverlayPermission()
+        return
+      }
+      const result =
+        endsAtMillis > 0 && OverlayModule?.showOverlayWithEndsAtMillis
+          ? OverlayModule.showOverlayWithEndsAtMillis(endsAtMillis)
+          : OverlayModule.showOverlay()
       currentOverlayApp = packageName
       console.log("[OVERLAY-SHOW] Success! Result:", result)
     } catch (error) {

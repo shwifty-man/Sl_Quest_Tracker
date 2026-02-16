@@ -19,6 +19,7 @@ public class AppWatcherService extends Service {
     private Thread monitorThread;
     private volatile boolean isRunning = true;
     private static String currentForegroundApp = "";
+    private static String overlayShowingFor = "";
     private static final String CHANNEL_ID = "ForegroundAppWatcherChannel";
 
     public static String getCurrentForegroundApp() {
@@ -111,17 +112,42 @@ public class AppWatcherService extends Service {
             String newForegroundApp = eventForegroundApp;
             Log.d("WATCHER", "UsageEvents top app: " + newForegroundApp + " (current: " + currentForegroundApp + ")");
 
-            // Only emit event if app has changed
             if (!newForegroundApp.equals(currentForegroundApp)) {
                 currentForegroundApp = newForegroundApp;
                 Log.d("WATCHER", "Foreground app changed to: " + currentForegroundApp);
-                // Emit event to React Native
                 com.facebook.react.bridge.ReactApplicationContext reactContext = AppWatcherServiceModule
                         .getReactContext();
                 if (reactContext != null) {
                     Log.d("WATCHER", "Emitting onAppChanged event");
                     AppWatcherServiceModule.emitAppChangedEvent(reactContext, currentForegroundApp);
                 }
+            }
+
+            // Native-side overlay enforcement (always evaluate)
+            boolean shouldBlock = AppWatcherServiceModule.isPenaltyActive()
+                    && AppWatcherServiceModule.isRestrictedApp(currentForegroundApp);
+            if (shouldBlock) {
+                if (!currentForegroundApp.equals(overlayShowingFor)) {
+                    Log.d("WATCHER", "Showing overlay for: " + currentForegroundApp);
+                    Intent intent = new Intent(this, OverlayService.class);
+                    intent.setAction("SHOW_OVERLAY");
+                    long endsAtMillis = AppWatcherServiceModule.getPenaltyEndsAtMillis();
+                    if (endsAtMillis > 0L) {
+                        intent.putExtra("ENDS_AT_MILLIS", endsAtMillis);
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startForegroundService(intent);
+                    } else {
+                        startService(intent);
+                    }
+                    overlayShowingFor = currentForegroundApp;
+                }
+            } else if (!overlayShowingFor.isEmpty()) {
+                Log.d("WATCHER", "Hiding overlay (not restricted/penalty) for: " + currentForegroundApp);
+                Intent intent = new Intent(this, OverlayService.class);
+                intent.setAction("HIDE_OVERLAY");
+                startService(intent);
+                overlayShowingFor = "";
             }
         }
     }

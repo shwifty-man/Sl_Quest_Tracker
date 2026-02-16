@@ -108,6 +108,82 @@ public class OverlayModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void showOverlayWithEndsAt(String endsAtIso) {
+        android.util.Log.d("OverlayModule", "[NATIVE] showOverlayWithEndsAt() called, endsAtIso=" + endsAtIso);
+        try {
+            ReactApplicationContext context = getReactApplicationContext();
+            if (context == null) {
+                android.util.Log.e("OverlayModule", "[NATIVE] Context is null!");
+                return;
+            }
+
+            boolean canDraw = android.provider.Settings.canDrawOverlays(context);
+            if (!canDraw) {
+                android.util.Log.e("OverlayModule", "[NATIVE] No SYSTEM_ALERT_WINDOW permission - opening settings");
+                Intent permissionIntent = new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + context.getPackageName()));
+                permissionIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(permissionIntent);
+                return;
+            }
+
+            Intent intent = new Intent(context, OverlayService.class);
+            intent.setAction("SHOW_OVERLAY");
+            if (endsAtIso != null) {
+                intent.putExtra("ENDS_AT_ISO", endsAtIso);
+            }
+
+            try {
+                ContextCompat.startForegroundService(context, intent);
+            } catch (Exception e) {
+                android.util.Log.e("OverlayModule", "[NATIVE] startForegroundService failed: " + e.getMessage());
+                context.startService(intent);
+            }
+        } catch (Exception e) {
+            android.util.Log.e("OverlayModule", "[NATIVE] EXCEPTION in showOverlayWithEndsAt: " + e.getMessage(), e);
+            e.printStackTrace();
+        }
+    }
+
+    @ReactMethod
+    public void showOverlayWithEndsAtMillis(double endsAtMillis) {
+        android.util.Log.d("OverlayModule",
+                "[NATIVE] showOverlayWithEndsAtMillis() called, endsAtMillis=" + endsAtMillis);
+        try {
+            ReactApplicationContext context = getReactApplicationContext();
+            if (context == null) {
+                android.util.Log.e("OverlayModule", "[NATIVE] Context is null!");
+                return;
+            }
+
+            boolean canDraw = android.provider.Settings.canDrawOverlays(context);
+            if (!canDraw) {
+                android.util.Log.e("OverlayModule", "[NATIVE] No SYSTEM_ALERT_WINDOW permission - opening settings");
+                Intent permissionIntent = new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + context.getPackageName()));
+                permissionIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(permissionIntent);
+                return;
+            }
+
+            Intent intent = new Intent(context, OverlayService.class);
+            intent.setAction("SHOW_OVERLAY");
+            intent.putExtra("ENDS_AT_MILLIS", (long) endsAtMillis);
+
+            try {
+                ContextCompat.startForegroundService(context, intent);
+            } catch (Exception e) {
+                android.util.Log.e("OverlayModule", "[NATIVE] startForegroundService failed: " + e.getMessage());
+                context.startService(intent);
+            }
+        } catch (Exception e) {
+            android.util.Log.e("OverlayModule", "[NATIVE] EXCEPTION in showOverlayWithEndsAtMillis: " + e.getMessage(),
+                    e);
+            e.printStackTrace();
+        }
+    }
+
+    @ReactMethod
     public void hideOverlay() {
         android.util.Log.d("OverlayModule", "[NATIVE] hideOverlay() CALLED ON NATIVE SIDE");
         try {

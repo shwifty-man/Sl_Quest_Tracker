@@ -28,6 +28,13 @@ class MainActivity : ReactActivity() {
     }
 }
 
+override fun onResume() {
+    super.onResume()
+    if (hasUsageStatsPermission(this)) {
+        startAppWatcherService()
+    }
+}
+
 private fun startAppWatcherService() {
     val serviceIntent = Intent(this, AppWatcherService::class.java)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

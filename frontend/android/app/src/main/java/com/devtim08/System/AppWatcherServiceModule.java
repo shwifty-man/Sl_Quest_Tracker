@@ -2,9 +2,12 @@ package com.devtim08.System;
 
 import android.content.Intent;
 import android.os.Build;
+import android.util.Log;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -13,11 +16,15 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.facebook.react.bridge.ReadableArray;
 
 public class AppWatcherServiceModule extends ReactContextBaseJavaModule {
 
     private final ReactApplicationContext reactContext;
     private static ReactApplicationContext staticReactContext;
+    private static volatile boolean penaltyActive = false;
+    private static final Set<String> restrictedApps = new HashSet<>();
+    private static volatile long penaltyEndsAtMillis = 0L;
 
     public AppWatcherServiceModule(ReactApplicationContext context) {
         super(context);
@@ -37,10 +44,12 @@ public class AppWatcherServiceModule extends ReactContextBaseJavaModule {
         return constants;
     }
 
+    @ReactMethod
     public void addListener(String eventName) {
         // RN requires this stub
     }
 
+    @ReactMethod
     public void removeListeners(int count) {
         // RN requires this stub
     }
@@ -56,6 +65,51 @@ public class AppWatcherServiceModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void setPenaltyActive(boolean active) {
+        penaltyActive = active;
+        Log.d("WATCHER", "Penalty active set to: " + active);
+
+        String currentApp = AppWatcherService.getCurrentForegroundApp();
+        boolean shouldBlock = active && isRestrictedApp(currentApp);
+        Intent intent = new Intent(reactContext, OverlayService.class);
+
+        if (shouldBlock) {
+            intent.setAction("SHOW_OVERLAY");
+            if (penaltyEndsAtMillis > 0L) {
+                intent.putExtra("ENDS_AT_MILLIS", penaltyEndsAtMillis);
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                reactContext.startForegroundService(intent);
+            } else {
+                reactContext.startService(intent);
+            }
+        } else {
+            intent.setAction("HIDE_OVERLAY");
+            reactContext.startService(intent);
+        }
+    }
+
+    @ReactMethod
+    public void setPenaltyEndsAtMillis(double endsAtMillis) {
+        penaltyEndsAtMillis = (long) endsAtMillis;
+        Log.d("WATCHER", "Penalty endsAtMillis set to: " + penaltyEndsAtMillis);
+    }
+
+    @ReactMethod
+    public void setRestrictedApps(ReadableArray apps) {
+        restrictedApps.clear();
+        if (apps != null) {
+            for (int i = 0; i < apps.size(); i++) {
+                String pkg = apps.getString(i);
+                if (pkg != null && !pkg.isEmpty()) {
+                    restrictedApps.add(pkg);
+                }
+            }
+        }
+        Log.d("WATCHER", "Restricted apps updated: " + restrictedApps);
+    }
+
+    @ReactMethod
     public void getForegroundApp(Promise promise) {
         promise.resolve(AppWatcherService.getCurrentForegroundApp());
     }
@@ -66,6 +120,18 @@ public class AppWatcherServiceModule extends ReactContextBaseJavaModule {
         context
                 .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                 .emit("onAppChanged", params);
+    }
+
+    public static boolean isPenaltyActive() {
+        return penaltyActive;
+    }
+
+    public static boolean isRestrictedApp(String packageName) {
+        return restrictedApps.contains(packageName);
+    }
+
+    public static long getPenaltyEndsAtMillis() {
+        return penaltyEndsAtMillis;
     }
 
     public static ReactApplicationContext getReactContext() {

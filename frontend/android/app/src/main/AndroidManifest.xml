@@ -27,7 +27,11 @@
     android:name=".AppWatcherService"
     android:exported="false"
     android:enabled="true"
-    android:foregroundServiceType="specialUse" />
+    android:foregroundServiceType="specialUse">
+    <property
+      android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+      android:value="Foreground app monitoring"/>
+  </service>
   <!-- REQUIRED FOR OVERLAY: Service that manages the overlay window display -->
   <service
     android:name=".OverlayService"
