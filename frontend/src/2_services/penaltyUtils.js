@@ -17,7 +17,7 @@ export async function isAnyPenaltyActive() {
       return false
     }
   } catch (err) {
-    console.warn("Penalty check failed:", err)
+    console.warn("[penalty] Penalty check failed", err)
     // In test mode on error, still return true
     return OVERLAY_TEST_MODE ? true : false
   }
@@ -29,7 +29,7 @@ export async function getActivePenalty() {
     const penalty = await fetchPenaltyForQuest(token)
     return penalty || null
   } catch (err) {
-    console.warn("Active penalty fetch failed:", err)
+    console.warn("[penalty] Active penalty fetch failed", err)
     return null
   }
 }
