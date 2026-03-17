@@ -10,6 +10,7 @@ import Svg, {
   Image as SvgImage,
 } from "react-native-svg"
 import { home, QuestDetails, styles, text } from "../2_services/styles"
+import SettingsIcon from "./SettingsIcon"
 
 const Profile = () => {
   const { hunterName, progress, badge, coins, getUserProfile } = useUser()
@@ -44,6 +45,7 @@ const Profile = () => {
   return (
     <Pressable onPress={handleViewProfile}>
       <View style={home.profileContainer}>
+      <SettingsIcon />
         <View style={styles.filterRowImage}>
           {url ? (
             <Svg marginRight="12" width={size} height={size}>
