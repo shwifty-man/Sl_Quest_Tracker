@@ -4,7 +4,7 @@ import { verifyJWT } from "../services/1_auth.service.js"
 
 export function authenticate(req, res, next) {
   // read Authorization header, verify JWT via auth.service.verifyJWT,
-  const token = req.headers.authorization?.split(" ")[1]
+  const token = req.headers.authorization?.split(" ")[1] || req.query.token
   if (!token) return res.status(401).send("Access denied. No token provided.")
     
   try {
@@ -13,7 +13,8 @@ export function authenticate(req, res, next) {
     req.user = decoded
     next()
   } catch (err) {
-    res.status(500).send("invalid Token")
+    console.warn("Authentication failed: invalid token")
+    res.status(401).send("invalid Token")
   }
 }
 
