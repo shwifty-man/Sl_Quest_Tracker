@@ -1,8 +1,16 @@
-import React, { createContext, useState, useEffect } from "react"
+import React, { createContext, useState, useEffect, useContext } from "react"
+import { NativeModules } from "react-native"
 import { fetchLogin, fetchRegister } from "../4_api/auth.api"
-import { removeJWTToken, removeUser, STORAGE_KEYS, storeJWTToken, storeUser } from "../2_services/storage"
+import {
+  removeJWTToken,
+  removeUser,
+  STORAGE_KEYS,
+  storeJWTToken,
+  storeUser,
+} from "../2_services/storage"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { DevSettings } from "react-native"
+import { ErrorContext } from "./ErrorProvider"
 
 // 1. Create the context
 export const AuthContext = createContext()
@@ -13,6 +21,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
+  const { setError } = useContext(ErrorContext)
 
   // 2b. Function: login
   const login = async (credentials) => {
@@ -22,10 +31,10 @@ export function AuthProvider({ children }) {
       // Send request to backend to login user
       const data = await fetchLogin(credentials)
 
-        if (!data || !data.user || !data.token) {
-          console.error("Invalid login data:", data)
-          return
-        }
+      if (!data || !data.user || !data.token) {
+        console.error("Invalid login data:", data)
+        return
+      }
 
       // Set user and token
       setUser(data.user)
@@ -35,6 +44,7 @@ export function AuthProvider({ children }) {
       await storeJWTToken(data.token)
       await storeUser(data.user)
     } catch (err) {
+      setError(err)
       throw new Error(err)
     } finally {
       setIsLoading(false)
@@ -46,17 +56,19 @@ export function AuthProvider({ children }) {
     // call backend, get token & user, update state
     try {
       const registerData = await fetchRegister(data)
-      
-      console.log("registerData.token: ", registerData.token)
-      await storeJWTToken(registerData.token)
 
-      console.log("registerData.user: ", registerData.user)
+      if (!registerData || !registerData.user || !registerData.token) {
+        console.error("[auth] Invalid register response", registerData)
+        return
+      }
+
       setUser(registerData.user)
       setToken(registerData.token)
 
       await storeJWTToken(registerData.token)
       await storeUser(registerData.user)
     } catch (err) {
+      setError(err)
       throw new Error(err)
     }
   }
@@ -75,14 +87,13 @@ export function AuthProvider({ children }) {
     try {
       const savedToken = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
       const savedUser = await AsyncStorage.getItem(STORAGE_KEYS.USER)
-      console.log("RESTORE SESSION SAVED USER IS: ", savedUser)
 
       if (savedToken && savedUser) {
         setToken(savedToken)
         setUser(JSON.parse(savedUser))
       }
     } catch (err) {
-      console.log(err)
+      console.error("[auth] Failed to restore session", err)
     } finally {
       setIsLoading(false)
     }
@@ -92,6 +103,16 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     restoreSession()
   }, [])
+
+  useEffect(() => {
+    const module = NativeModules?.AppWatcherServiceModule
+    if (module?.setBackendUrl && process.env.EXPO_PUBLIC_BACKEND_URL) {
+      module.setBackendUrl(process.env.EXPO_PUBLIC_BACKEND_URL)
+    }
+    if (module?.setAuthToken) {
+      module.setAuthToken(token || "")
+    }
+  }, [token])
 
   // 3. Provide state & actions to children
   return (
