@@ -9,20 +9,52 @@ import { getActivePenalty, isAnyPenaltyActive } from "./penaltyUtils"
 
 const { AppWatcherServiceModule, OverlayModule } = NativeModules
 
-console.log("=== OVERLAY MODULE DEBUG ===")
-console.log("OverlayModule exists:", !!OverlayModule)
-console.log(
-  "OverlayModule methods:",
-  OverlayModule ? Object.keys(OverlayModule) : "null",
-)
-console.log("===========================")
-
-const blockedApps = ["com.google.android.youtube"]
-console.log("blockedApps: ", blockedApps)
+let blockedApps = []
 let eventListener = null
 let emitter = null
 let currentOverlayApp = null // Track which app currently has overlay displayed
 let currentPackageName = null
+let penaltyPollInterval = null
+
+const updateOverlayForPenalty = async (penaltyActive, endsAtMillis) => {
+  if (!OverlayModule) return
+  if (!currentPackageName) return
+
+  const isBlocked = blockedApps.includes(currentPackageName)
+
+  if (penaltyActive && isBlocked) {
+    if (currentOverlayApp !== currentPackageName) {
+      try {
+        const hasPermission = await OverlayModule.checkOverlayPermission()
+        if (!hasPermission) {
+          console.warn("[OVERLAY] Permission missing; opening system settings")
+          OverlayModule.requestOverlayPermission()
+          return
+        }
+        if (endsAtMillis > 0 && OverlayModule?.showOverlayWithEndsAtMillis) {
+          OverlayModule.showOverlayWithEndsAtMillis(endsAtMillis)
+        } else {
+          OverlayModule.showOverlay()
+        }
+        currentOverlayApp = currentPackageName
+      } catch (error) {
+        console.error("[OVERLAY] Failed to show overlay", error)
+      }
+    }
+    return
+  }
+
+  if (!penaltyActive || !isBlocked) {
+    if (currentOverlayApp !== null) {
+      try {
+        OverlayModule.hideOverlay()
+        currentOverlayApp = null
+      } catch (error) {
+        console.error("[OVERLAY] Failed to hide overlay", error)
+      }
+    }
+  }
+}
 
 const parseEndsAtMillis = (penalty) => {
   const raw = penalty?.ends_at || penalty?.endsAt || penalty?.endsAtIso
@@ -36,11 +68,11 @@ const syncPenaltyState = async () => {
     const penalty = await getActivePenalty()
     const penaltyActive = penalty?.active === true
     const endsAtMillis = parseEndsAtMillis(penalty)
-    if (AppWatcherServiceModule?.setPenaltyActive) {
-      AppWatcherServiceModule.setPenaltyActive(!!penaltyActive)
-    }
     if (AppWatcherServiceModule?.setPenaltyEndsAtMillis) {
       AppWatcherServiceModule.setPenaltyEndsAtMillis(endsAtMillis)
+    }
+    if (AppWatcherServiceModule?.setPenaltyActive) {
+      AppWatcherServiceModule.setPenaltyActive(!!penaltyActive)
     }
     return penaltyActive
   } catch (error) {
@@ -58,7 +90,7 @@ const syncPenaltyState = async () => {
 // Function to manually close overlay (called when user taps close button)
 export const closeOverlay = () => {
   if (OverlayModule && currentOverlayApp !== null) {
-    console.log("[OVERLAY-CLOSE] User closed overlay manually")
+    console.info("[OVERLAY] Overlay dismissed by user")
     OverlayModule.hideOverlay()
     currentOverlayApp = null
   }
@@ -67,16 +99,14 @@ export const closeOverlay = () => {
 // Check if overlay permission is granted
 export const checkOverlayPermission = async () => {
   if (!OverlayModule) {
-    console.error("OverlayModule not available")
+    console.warn("[OVERLAY] Native overlay module unavailable")
     return false
   }
 
   try {
-    const hasPermission = await OverlayModule.checkOverlayPermission()
-    console.log("Overlay permission status:", hasPermission)
-    return hasPermission
+    return await OverlayModule.checkOverlayPermission()
   } catch (error) {
-    console.error("Error checking overlay permission:", error)
+    console.error("[OVERLAY] Failed to check overlay permission", error)
     return false
   }
 }
@@ -84,21 +114,21 @@ export const checkOverlayPermission = async () => {
 // Request overlay permission
 export const requestOverlayPermission = () => {
   if (!OverlayModule) {
-    console.error("OverlayModule not available")
+    console.warn("[OVERLAY] Native overlay module unavailable")
     return
   }
 
   try {
     OverlayModule.requestOverlayPermission()
   } catch (error) {
-    console.error("Error requesting overlay permission:", error)
+    console.error("[OVERLAY] Failed to request overlay permission", error)
   }
 }
 
 // Set up the native event listener
 const setupEventListener = () => {
   if (!AppWatcherServiceModule) {
-    console.warn("AppWatcherServiceModule not available")
+    console.warn("[OVERLAY] App watcher module unavailable")
     return
   }
 
@@ -109,7 +139,6 @@ const setupEventListener = () => {
 
   emitter = new NativeEventEmitter(AppWatcherServiceModule)
   eventListener = emitter.addListener("onAppChanged", ({ packageName }) => {
-    console.log("App changed event:", packageName)
     onAppChanged(packageName)
   })
 }
@@ -117,18 +146,71 @@ const setupEventListener = () => {
 // Start the AppWatcher service and listener
 export const startAppWatcherService = async () => {
   if (!AppWatcherServiceModule) {
-    console.warn("AppWatcherServiceModule not available")
+    console.warn("[OVERLAY] App watcher module unavailable")
     return
   }
 
   if (Platform.OS === "android") {
     AppWatcherServiceModule.startService()
 
+    if (AppWatcherServiceModule?.getEntertainmentApps) {
+      try {
+        const apps = await AppWatcherServiceModule.getEntertainmentApps()
+        const packages = (apps || [])
+          .map((app) => app?.packageName)
+          .filter((pkg) => typeof pkg === "string" && pkg.length > 0)
+
+        if (packages.length > 0) {
+          blockedApps = [...new Set(packages)]
+          console.info(`[OVERLAY] Loaded ${blockedApps.length} restricted apps`)
+        }
+      } catch (error) {
+        console.warn("[OVERLAY] Failed to auto-load entertainment apps:", error)
+      }
+    }
+
     if (AppWatcherServiceModule.setRestrictedApps) {
       AppWatcherServiceModule.setRestrictedApps(blockedApps)
+      console.info(`[OVERLAY] Restricted apps synced (${blockedApps.length})`)
     }
 
     await syncPenaltyState()
+
+    if (AppWatcherServiceModule?.getForegroundApp) {
+      try {
+        const pkg = await AppWatcherServiceModule.getForegroundApp()
+        if (pkg) {
+          currentPackageName = pkg
+          await onAppChanged(pkg)
+        }
+      } catch (error) {
+        console.warn("[OVERLAY] Failed to read foreground app:", error)
+      }
+    }
+
+    if (penaltyPollInterval) {
+      clearInterval(penaltyPollInterval)
+    }
+    penaltyPollInterval = setInterval(async () => {
+      const penalty = await getActivePenalty()
+      const penaltyActive = penalty?.active === true
+      const endsAtMillis = parseEndsAtMillis(penalty)
+      if (AppWatcherServiceModule?.getForegroundApp) {
+        try {
+          const pkg = await AppWatcherServiceModule.getForegroundApp()
+          if (pkg) currentPackageName = pkg
+        } catch (error) {
+          console.warn("[OVERLAY] Failed to read foreground app:", error)
+        }
+      }
+      await updateOverlayForPenalty(penaltyActive, endsAtMillis)
+      if (AppWatcherServiceModule?.setPenaltyActive) {
+        AppWatcherServiceModule.setPenaltyActive(!!penaltyActive)
+      }
+      if (AppWatcherServiceModule?.setPenaltyEndsAtMillis) {
+        AppWatcherServiceModule.setPenaltyEndsAtMillis(endsAtMillis)
+      }
+    }, 15000)
 
     // Initial listener setup
     setupEventListener()
@@ -140,12 +222,12 @@ export const startAppWatcherService = async () => {
         syncPenaltyState()
       } else {
         if (OverlayModule && currentOverlayApp !== null) {
-          console.log("[OVERLAY-HIDE] App inactive/background - hiding overlay")
+          console.info("[OVERLAY] Hiding overlay while app is backgrounded")
           try {
             OverlayModule.hideOverlay()
             currentOverlayApp = null
           } catch (error) {
-            console.error("[OVERLAY-ERROR] Failed to hide overlay:", error)
+            console.error("[OVERLAY] Failed to hide overlay", error)
           }
         }
       }
@@ -155,6 +237,10 @@ export const startAppWatcherService = async () => {
       subscription.remove()
       if (eventListener) {
         eventListener.remove()
+      }
+      if (penaltyPollInterval) {
+        clearInterval(penaltyPollInterval)
+        penaltyPollInterval = null
       }
     }
   }
@@ -166,12 +252,11 @@ export const onAppChanged = async (packageName) => {
 
   if (!packageName) {
     if (OverlayModule && currentOverlayApp !== null) {
-      console.log("[OVERLAY-HIDE] No package name - hiding overlay")
       try {
         OverlayModule.hideOverlay()
         currentOverlayApp = null
       } catch (error) {
-        console.error("[OVERLAY-ERROR] Failed to hide overlay:", error)
+        console.error("[OVERLAY] Failed to hide overlay", error)
       }
     }
     return
@@ -179,95 +264,22 @@ export const onAppChanged = async (packageName) => {
 
   // Check if OverlayModule is available
   if (!OverlayModule) {
-    console.error(
-      "OverlayModule is not available! Check native module registration.",
-    )
+    console.error("[OVERLAY] Native overlay module unavailable")
     return
   }
 
   const penalty = await getActivePenalty()
   const penaltyActive = penalty?.active === true
   const endsAtMillis = parseEndsAtMillis(penalty)
-  if (AppWatcherServiceModule?.setPenaltyActive) {
-    AppWatcherServiceModule.setPenaltyActive(!!penaltyActive)
-  }
   if (AppWatcherServiceModule?.setPenaltyEndsAtMillis) {
     AppWatcherServiceModule.setPenaltyEndsAtMillis(endsAtMillis)
   }
+  if (AppWatcherServiceModule?.setPenaltyActive) {
+    AppWatcherServiceModule.setPenaltyActive(!!penaltyActive)
+  }
   if (currentPackageName !== packageName) {
-    console.log(
-      "[APP-CHANGE] Stale app change ignored:",
-      packageName,
-      "| current:",
-      currentPackageName,
-    )
     return
   }
-  console.log(
-    "[APP-CHANGE] Package:",
-    packageName,
-    "| Penalty:",
-    penaltyActive,
-    "| Current Overlay:",
-    currentOverlayApp,
-  )
 
-  // If current app is blocked and penalty is active, show overlay (always show on blocked app)
-  if (penaltyActive && blockedApps.includes(packageName)) {
-    // Always show overlay when opening a blocked app with active penalty
-    console.log("[OVERLAY-SHOW] Showing overlay for:", packageName)
-    console.log("[OVERLAY-SHOW] OverlayModule available:", !!OverlayModule)
-    console.log(
-      "[OVERLAY-SHOW] showOverlay method:",
-      typeof OverlayModule?.showOverlay,
-    )
-    try {
-      const hasPermission = await OverlayModule.checkOverlayPermission()
-      if (!hasPermission) {
-        console.warn("[OVERLAY] Permission missing, requesting...")
-        OverlayModule.requestOverlayPermission()
-        return
-      }
-      const result =
-        endsAtMillis > 0 && OverlayModule?.showOverlayWithEndsAtMillis
-          ? OverlayModule.showOverlayWithEndsAtMillis(endsAtMillis)
-          : OverlayModule.showOverlay()
-      currentOverlayApp = packageName
-      console.log("[OVERLAY-SHOW] Success! Result:", result)
-    } catch (error) {
-      console.error("[OVERLAY-ERROR] Failed to show overlay:", error)
-      console.error("[OVERLAY-ERROR] Error message:", error.message)
-      console.error("[OVERLAY-ERROR] Error stack:", error.stack)
-    }
-  } else if (!penaltyActive || !blockedApps.includes(packageName)) {
-    // Hide overlay when:
-    // 1. Penalty is no longer active, OR
-    // 2. User switched to any non-blocked app (including launcher/home)
-    const shouldHide = !penaltyActive || !blockedApps.includes(packageName)
-    console.log(
-      "[OVERLAY-DEBUG] Hide check - Penalty:",
-      penaltyActive,
-      "| isBlocked:",
-      blockedApps.includes(packageName),
-      "| shouldHide:",
-      shouldHide,
-      "| currentOverlayApp:",
-      currentOverlayApp,
-    )
-    if (currentOverlayApp !== null) {
-      console.log(
-        "[OVERLAY-HIDE] Hiding overlay. Penalty:",
-        penaltyActive,
-        "| App:",
-        packageName,
-      )
-      try {
-        OverlayModule.hideOverlay()
-        currentOverlayApp = null
-        console.log("[OVERLAY-HIDE] Success!")
-      } catch (error) {
-        console.error("[OVERLAY-ERROR] Failed to hide overlay:", error)
-      }
-    }
-  }
+  await updateOverlayForPenalty(penaltyActive, endsAtMillis)
 }
