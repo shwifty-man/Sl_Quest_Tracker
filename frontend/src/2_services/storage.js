@@ -1,15 +1,19 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
-
 export const STORAGE_KEYS = {
   TOKEN: "UserToken",
   USER: "User",
   QUESTS: "quests_cache",
+  HUNTER_NAME_PREFIX: "hunter_name_",
 }
 
 export async function setCachedQuests(quests) {
-  await AsyncStorage.setItem(STORAGE_KEYS.QUESTS, JSON.stringify(quests))
-  console.log("Stored Quest")
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.QUESTS, JSON.stringify(quests))
+  } catch (err) {
+    console.warn("[storage] Failed to cache quests", err)
+    throw err
+  }
 }
 
 export async function getCachedQuests() {
@@ -17,40 +21,38 @@ export async function getCachedQuests() {
   return data ? JSON.parse(data) : []
 }
 
-
 export async function storeJWTToken(token) {
   try {
-    console.log("Store token: ", token)
     await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token)
-    console.log("Stored Token")
   } catch (err) {
-    throw new Error(err)
+    console.warn("[storage] Failed to store auth token", err)
+    throw err
   }
 }
 
 export async function removeJWTToken() {
   try {
     await AsyncStorage.removeItem(STORAGE_KEYS.TOKEN)
-    console.log("Removed Token")
   } catch (err) {
-    throw new Error(err)
+    console.warn("[storage] Failed to remove auth token", err)
+    throw err
   }
 }
 
 export async function storeUser(user) {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user))
-    console.log("Stored User")
   } catch (err) {
-    throw new Error(err)
+    console.warn("[storage] Failed to store user profile", err)
+    throw err
   }
 }
 
 export async function removeUser() {
   try {
     await AsyncStorage.removeItem(STORAGE_KEYS.USER)
-    console.log("Removed User")
   } catch (err) {
-    throw new Error(err)
+    console.warn("[storage] Failed to remove user profile", err)
+    throw err
   }
 }
