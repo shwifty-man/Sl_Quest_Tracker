@@ -68,19 +68,42 @@ export function verifyJWT(token) {
     const verifiedToken = jwt.verify(token, process.env.JWT_SECRET)
     return verifiedToken
   } catch (err) {
+    console.warn("verifyJWT failed")
     throw new Error("Invalid or expired token")
   }
 }
 
 export async function createUser(email, password) {
   // insert a new user in the DB and return the created user record
+  const client = await pool.connect();
   try {
+    await client.query("BEGIN");
+
     const passwordHash = await hashPassword(password)
     const sql = `INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email;`
-    const result = await pool.query(sql, [email, passwordHash])
-    return result.rows[0]
+    const result = await client.query(sql, [email, passwordHash])
+    const user = result.rows[0]
+    await client.query(`INSERT INTO progress (user_id, level, exp, coins) VALUES ($1, 1, 0, 0)`,[user.id]);
+    await client.query(`INSERT INTO user_stats (user_id, discipline, focus, endurance, strength, recovery) VALUES ($1, 1, 1, 1, 1, 1);`, [user.id])
+
+    const defaultBadgeResult = await client.query(`SELECT id FROM badges ORDER BY id LIMIT 1;`)
+    if (defaultBadgeResult.rows.length > 0) {
+      const defaultBadgeId = defaultBadgeResult.rows[0].id
+      await client.query(`INSERT INTO user_badges (user_id, badge_id) VALUES ($1, $2)`, [user.id, defaultBadgeId])
+    } else {
+      await client.query(`INSERT INTO user_badges (user_id, badge_id) VALUES ($1, NULL)`, [user.id])
+    }
+
+    await client.query("COMMIT");
+    console.info(`User registered: userId=${user.id}`)
+
+    return user
   } catch (err) {
-    throw new Error(err.message)
+    await client.query("ROLLBACK");
+      if (err.code === '23505') {
+    throw new Error('Email already exists');
+  }
+    throw err
   }
 }
 
@@ -105,7 +128,7 @@ export async function findUserById(id) {
     throw new Error(err.message)
   }
 }
-
+``
 export async function loginUser(email, password) {
   // validate credentials, return user info + token if valid, else throw
   try {
