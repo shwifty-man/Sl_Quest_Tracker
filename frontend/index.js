@@ -14,14 +14,20 @@ import { registerRootComponent } from "expo"
 import App from "./App"
 import { AuthProvider } from "./src/Providers/AuthProvider"
 import { QuestProvider } from "./src/Providers/QuestProvider"
+import { UserProvider } from "./src/Providers/UserProvider"
+import { ErrorProvider } from "./src/Providers/ErrorProvider"
 
 function Root() {
   return (
-    <AuthProvider>
-      <QuestProvider>
-        <App />
-      </QuestProvider>
-    </AuthProvider>
+    <ErrorProvider>
+      <AuthProvider>
+        <UserProvider>
+          <QuestProvider>
+            <App />
+          </QuestProvider>
+        </UserProvider>
+      </AuthProvider>
+    </ErrorProvider>
   )
 }
 
