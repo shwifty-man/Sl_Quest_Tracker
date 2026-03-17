@@ -1,24 +1,20 @@
 import { View, Text, TextInput, Pressable, StyleSheet } from "react-native"
-import { useAuth } from "../../2_services/context"
-import { useEffect, useState } from "react"
+import { useAuth, useError } from "../../2_services/context"
+import { useState } from "react"
 import { styles } from "../../2_services/styles"
 
 const Register = ({ navigation }) => {
   const [email, setEmailValue] = useState("")
   const [password, setPasswordValue] = useState("")
   const { register, user } = useAuth()
-
-  useEffect(() => {
-    if (user) {
-      console.log("User updated:", user)
-    }
-  }, [user])
+  const { setError } = useError()
 
   const handleRegister = async () => {
     try {
       await register({ email, password })
     } catch (err) {
-      console.error("Register failed:", err)
+      console.error("[auth] Register failed", err)
+      setError(err)
     }
   }
 

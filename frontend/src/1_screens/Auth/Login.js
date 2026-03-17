@@ -1,24 +1,19 @@
 import { View, Text, TextInput, Pressable } from "react-native"
-import { useAuth } from "../../2_services/context"
-import { useEffect, useState } from "react"
+import { useAuth, useError } from "../../2_services/context"
+import { useState } from "react"
 import { styles } from "../../2_services/styles"
 
 const Login = ({ navigation }) => {
   const [emailValue, setEmailValue] = useState("")
   const [passwordValue, setPasswordValue] = useState("")
   const { login, user } = useAuth()
-
-  useEffect(() => {
-    if (user) {
-      console.log("User updated:", user)
-    }
-  }, [user])
+  const { setError } = useError()
 
   const handleLogin = async () => {
     try {
       await login({ email: emailValue, password: passwordValue })
     } catch (err) {
-      throw new Error("Login failed:", err)
+      setError(err)
     }
   }
 
@@ -56,17 +51,20 @@ const Login = ({ navigation }) => {
         value={passwordValue}
         onChangeText={setPasswordValue}
       />
+      {emailValue ? (
+        <Pressable style={styles.button} onPress={handleLogin}>
+          <Text>Login</Text>
+        </Pressable>
+      ) : null}
 
-      <Pressable style={styles.button} onPress={handleLogin}>
-        <Text>Login</Text>
-      </Pressable>
-
-      <Pressable
-        style={styles.button}
-        onPress={() => navigation.navigate("Register")}
-      >
-        <Text>Register</Text>
-      </Pressable>
+      {emailValue.length < 1 ? (
+        <Pressable
+          style={styles.button}
+          onPress={() => navigation.navigate("Register")}
+        >
+          <Text>Register</Text>
+        </Pressable>
+      ) : null}
     </View>
   )
 }
