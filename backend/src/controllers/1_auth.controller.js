@@ -8,7 +8,8 @@ export async function register(req, res) {
       const user = await registerUser(email, password)
       res.status(200).json(user)
   } catch (err) {
-    res.status(400).json({ error: err.message })
+    console.error("register controller error:", err)
+    res.status(500).json(err.message)
   }
 }
 
