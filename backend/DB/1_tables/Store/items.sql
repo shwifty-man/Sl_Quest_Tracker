@@ -1,0 +1,12 @@
+DROP TABLE IF EXISTS items CASCADE;
+
+CREATE TABLE IF NOT EXISTS items (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  image_path TEXT,
+  type TEXT NOT NULL,
+  effect_id INTEGER REFERENCES effects(id) ON DELETE SET NULL,
+  badge_id INTEGER REFERENCES badges(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);

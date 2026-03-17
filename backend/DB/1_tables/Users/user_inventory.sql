@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS user_inventory CASCADE;
+
+CREATE TABLE IF NOT EXISTS user_inventory (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  quantity INTEGER NOT NULL DEFAULT 1,
+  acquired_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  PRIMARY KEY (user_id, item_id)
+);

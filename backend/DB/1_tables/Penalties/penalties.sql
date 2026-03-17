@@ -1,9 +1,11 @@
+DROP TABLE IF EXISTS penalties CASCADE;
+
 CREATE TABLE IF NOT EXISTS penalties (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  quest_id INTEGER REFERENCES quests(id) ON DELETE CASCADE,
   active BOOLEAN DEFAULT false,
   restricted_apps TEXT[],
   started_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   ends_at TIMESTAMP WITH TIME ZONE            -- nullable, until manually cleared or auto-end
 );
-   

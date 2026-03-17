@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS effects CASCADE;
+
+CREATE TABLE IF NOT EXISTS effects (
+  id SERIAL PRIMARY KEY,
+  key TEXT NOT NULL UNIQUE,
+  effect_type TEXT NOT NULL,
+  value NUMERIC(10, 4) NOT NULL,
+  duration_seconds INTEGER,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);

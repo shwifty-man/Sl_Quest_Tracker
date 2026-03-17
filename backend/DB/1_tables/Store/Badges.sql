@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS badges CASCADE;
+
+CREATE TABLE badges (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    image_path TEXT NOT NULL,
+    price INT DEFAULT 0
+);
