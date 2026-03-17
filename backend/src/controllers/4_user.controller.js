@@ -66,23 +66,3 @@ export async function useInventoryItemController(req, res) {
     res.status(500).json({ error: err.message || "Internal Server Error" })
   }
 }
-
-// export async function equipInventoryItemController(req, res) {
-//   try {
-//     res.status(501).json({ error: "Not implemented" })
-//   } catch (err) {
-//     console.error("equipInventoryItemController error:", err)
-//     res.status(500).json({ error: err.message || "Internal Server Error" })
-//   }
-// }
-
-// export async function unequipInventoryItemController(req, res) {
-//   try {
-//     res.status(501).json({ error: "Not implemented" })
-//   } catch (err) {
-//     console.error("unequipInventoryItemController error:", err)
-//     res.status(500).json({ error: err.message || "Internal Server Error" })
-//   }
-// }
-
-// Make sure newStats returns the updated stats
