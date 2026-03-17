@@ -25,6 +25,8 @@ import androidx.core.app.NotificationCompat;
 
 public class OverlayService extends Service {
 
+    private static final String TAG = "OverlayService";
+
     private WindowManager windowManager;
     private View overlayView;
     private TextView penaltyTimeText;
@@ -43,7 +45,6 @@ public class OverlayService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent != null ? intent.getAction() : null;
-        android.util.Log.d("OverlayService", "onStartCommand with action: " + action);
 
         if ("HIDE_OVERLAY".equals(action)) {
             hideOverlayView();
@@ -63,7 +64,6 @@ public class OverlayService extends Service {
         if (overlayView == null) {
             showOverlayView();
         } else {
-            android.util.Log.d("OverlayService", "Overlay already showing");
             updatePenaltyTimeText();
         }
 
@@ -93,12 +93,12 @@ public class OverlayService extends Service {
 
             // Add the view to WindowManager
             windowManager.addView(overlayView, params);
-            android.util.Log.d("OverlayService", "Overlay view added");
+            android.util.Log.i(TAG, "Overlay displayed");
 
             updatePenaltyTimeText();
             startCountdownUpdates();
         } catch (Exception e) {
-            android.util.Log.e("OverlayService", "Error showing overlay view", e);
+            android.util.Log.e(TAG, "Failed to display overlay", e);
         }
     }
 
@@ -109,9 +109,9 @@ public class OverlayService extends Service {
                 windowManager.removeView(overlayView);
                 overlayView = null;
                 penaltyTimeText = null;
-                android.util.Log.d("OverlayService", "Overlay view removed");
+                android.util.Log.i(TAG, "Overlay dismissed");
             } catch (Exception e) {
-                android.util.Log.e("OverlayService", "Error removing overlay view", e);
+                android.util.Log.e(TAG, "Failed to dismiss overlay", e);
             }
         }
     }
@@ -120,7 +120,6 @@ public class OverlayService extends Service {
     public void onDestroy() {
         super.onDestroy();
         hideOverlayView();
-        android.util.Log.d("OverlayService", "Service destroyed");
     }
 
     private void startCountdownUpdates() {
@@ -153,6 +152,12 @@ public class OverlayService extends Service {
         }
 
         long remaining = Math.max(endsAtMillis - System.currentTimeMillis(), 0L);
+        if (remaining <= 0L) {
+            penaltyTimeText.setText("Time remaining: 00:00");
+            hideOverlayView();
+            stopSelf();
+            return;
+        }
         penaltyTimeText.setText("Time remaining: " + formatRemaining(remaining));
     }
 
@@ -184,7 +189,7 @@ public class OverlayService extends Service {
             Date date = sdfNoMillis.parse(iso);
             return date != null ? date.getTime() : 0L;
         } catch (ParseException e) {
-            android.util.Log.e("OverlayService", "Failed to parse ends_at ISO: " + iso, e);
+            android.util.Log.e(TAG, "Failed to parse penalty expiration timestamp", e);
             return 0L;
         }
     }

@@ -5,41 +5,86 @@
     android:layout_height="match_parent"
     android:background="#DD000000">
 
-    <LinearLayout
+    <FrameLayout
         android:layout_gravity="center"
-        android:orientation="vertical"
-        android:padding="24dp"
-        android:background="#FF1a1a1a"
-        android:elevation="16dp"
-        android:layout_width="300dp"
-        android:layout_height="wrap_content">
+        android:layout_width="320dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/overlay_edge_glow"
+        android:elevation="16dp">
 
-        <TextView
-            android:id="@+id/blockTitle"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="App Blocked"
-            android:textColor="#FFFFFF"
-            android:textSize="22sp"
-            android:textStyle="bold"/>
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:background="@drawable/overlay_card_bg">
 
-        <TextView
-            android:id="@+id/blockReason"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Penalty is active"
-            android:textColor="#CCCCCC"
-            android:layout_marginTop="8dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp"
+                android:gravity="center">
 
-        <TextView
-            android:id="@+id/penaltyTimeText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Time remaining: --:--"
-            android:textColor="#9FDAEF"
-            android:layout_marginTop="12dp"
-            android:textSize="16sp"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/overlay_warning_tag_bg"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="12dp">
 
-    </LinearLayout>
+                    <TextView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:gravity="center"
+                        android:text="!"
+                        android:textStyle="bold"
+                        android:textColor="#FF4C4C"
+                        android:background="@drawable/overlay_warning_square_bg" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="8dp"
+                        android:text="WARNING"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="#FF4C4C" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/blockTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="APP BLOCKED"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center"/>
+
+            <TextView
+                android:id="@+id/blockReason"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Penalty is active"
+                android:textColor="#FFD2D2"
+                android:layout_marginTop="8dp"
+                android:gravity="center"/>
+
+            <TextView
+                android:id="@+id/penaltyTimeText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Time remaining: --:--"
+                android:textColor="#FF9B9B"
+                android:layout_marginTop="12dp"
+                android:textSize="16sp"
+                android:gravity="center"/>
+
+        </LinearLayout>
+    </FrameLayout>
 
 </FrameLayout>
