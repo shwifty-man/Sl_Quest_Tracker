@@ -1,20 +1,35 @@
 import { useState } from "react"
 import { View, Text, TextInput, Button, Pressable } from "react-native"
 import { styles } from "../../2_services/styles"
-import { useQuests } from "../../2_services/context"
-
-
+import { useQuests, useError } from "../../2_services/context"
+import DropDown from "../../3_components/DropDown"
 
 const CreateQuest = ({ navigation }) => {
   const [questTitle, setQuestTitle] = useState("")
   const [unitName, setUnitName] = useState("")
   const [targetValue, setTargetValue] = useState(null)
+  const [type, setType] = useState(null)
+  const [typeItems, setTypeItems] = useState([
+    { label: "Workout", value: "Workout" },
+    { label: "Study", value: "Study" },
+    { label: "Reading", value: "Reading" },
+    { label: "Meditation", value: "Meditation" },
+  ])
 
   const { questCreation } = useQuests()
+  const { setError } = useError()
 
   async function handleQuestCreation() {
-    await questCreation(questTitle, unitName, targetValue)
-    navigation.navigate("Home")
+    if (questTitle && unitName && targetValue && type) {
+      try {
+        await questCreation(questTitle, type, unitName, targetValue)
+        navigation.navigate("Home")
+      } catch (err) {
+        setError(err)
+      }
+    } else {
+      return
+    }
   }
 
   return (
@@ -36,6 +51,14 @@ const CreateQuest = ({ navigation }) => {
         onChangeText={setUnitName}
       />
 
+      <DropDown
+        value={type}
+        onChange={setType}
+        items={typeItems}
+        setItems={setTypeItems}
+        placeholder="Type"
+      />
+
       <TextInput
         style={styles.input}
         keyboardType="numeric"
@@ -44,11 +67,12 @@ const CreateQuest = ({ navigation }) => {
         value={targetValue}
         onChangeText={setTargetValue}
       />
+      {questTitle && unitName && targetValue && type ? (
+        <Pressable style={styles.button} onPress={handleQuestCreation}>
+          <Text>Create Quest</Text>
+        </Pressable>
+      ) : null}
 
-      <Button
-        title="button"
-        onPress={handleQuestCreation}
-      ></Button>
       <Pressable
         style={styles.button}
         onPress={() => navigation.navigate("Home")}
