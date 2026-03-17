@@ -1,5 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage"
-
 export async function fetchLogin(credentials) {
   try {
     const response = await fetch(
@@ -22,10 +20,6 @@ export async function fetchLogin(credentials) {
     }
 
     const data = await response.json()
-
-    if (response.ok) {
-      console.log("Login response was ok.")
-    }
     return data
   } catch (error) {
     throw new Error("Fetching data:" + error)
@@ -47,13 +41,12 @@ export async function fetchRegister(credentials) {
         }),
       },
     )
+    const data = await response.json()
     if (!response.ok) {
       throw new Error("Network response was NOT ok. Status: " + response.status)
     }
-    const data = await response.json()
     return data
   } catch (err) {
-    console.error("Error fetching data:", err)
     throw err
   }
 }
