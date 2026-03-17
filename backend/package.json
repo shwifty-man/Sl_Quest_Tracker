@@ -1,11 +1,15 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon --watch src --watch DB --ext js,json DB/index.js",
-    "start": "node src/index.js"
+    "dev": "nodemon --watch src --watch DB --ext js,json server.js",
+    "start": "node server.js",
+    "seed:shop": "node DB/seedShop.js",
+    "seed:badges": "node DB/seedBadges.js",
+    "seed:badge-items": "node DB/seedBadgeItems.js",
+    "seed:user-badge-inventory": "node DB/seedUserBadgeInventory.js"
   },
   "keywords": [],
   "author": "",
