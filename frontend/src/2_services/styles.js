@@ -1,30 +1,109 @@
-import { StyleSheet } from "react-native"
-import { Text } from "react-native"
+import { StyleSheet, Text } from "react-native"
+
+const COLORS = {
+  background: "#040E29",
+  cardBackground: "#092356",
+  accent: "#9FDAEF",
+  primary: "#5BA4DE",
+  textLight: "#FFFFFF",
+  textMuted: "#4F7097",
+  textTitle: "#62D5F8",
+  warning: "#FF4C4C",
+  success: "#4CFF88",
+  lightGray: "#CCCCCC",
+  mediumGray: "#aaa",
+  darkText: "#000",
+  hunter: "#1468D7",
+  gold: "#FFD166",
+  inventory: "#2E4C74",
+}
+
+const BORDER = {
+  borderColor: COLORS.accent,
+  borderWidth: 1,
+}
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
     padding: 16,
-    backgroundColor: "#040E29",
+    backgroundColor: COLORS.background,
+  },
+  edgeGlowContainer: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  edgeGlowTop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 36,
+  },
+  edgeGlowBottom: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 36,
+  },
+  edgeGlowLeft: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: 36,
+  },
+  edgeGlowRight: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: 36,
   },
   title: {
     fontSize: 24,
     marginBottom: 24,
     textAlign: "center",
-    color: "#9FDAEF",
+    color: COLORS.accent,
   },
   input: {
     borderWidth: 1,
     borderRadius: 6,
     padding: 12,
-    paddingLeft: 30,
+    paddingLeft: 90,
     marginBottom: 12,
     backgroundColor: "#26282B",
-    color: "#9FDAEF",
+    color: COLORS.accent,
+  },
+  dropdownContainer: {
+    marginBottom: 12,
+    zIndex: 1000,
+  },
+  dropdown: {
+    backgroundColor: "#26282B",
+    borderRadius: 6,
+  },
+  dropdownText: {
+    color: COLORS.accent,
+    paddingLeft: 80,
+  },
+  dropdownPlaceholder: {
+    color: COLORS.accent,
+    paddingLeft: 80,
+    paddingVertical: 12,
+  },
+  dropdownList: {
+    backgroundColor: "#26282B",
+    borderColor: COLORS.accent,
+    borderWidth: 1,
   },
   button: {
-    backgroundColor: "#5BA4DE",
+    backgroundColor: COLORS.primary,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 6,
@@ -33,13 +112,35 @@ export const styles = StyleSheet.create({
     width: "70%",
     alignSelf: "center",
   },
+  pressableButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 50,
+    alignItems: "center",
+    alignSelf: "center",
+    margin: 15,
+    width: "50%",
+    padding: 5,
+  },
+  pressableButtonToggle: {
+    backgroundColor: COLORS.primary,
+    borderTopLeftRadius: 50,
+    alignItems: "center",
+    alignSelf: "center",
+    margin: 15,
+    width: "50%",
+    padding: 5,
+  },
+  pressableText: {
+    fontSize: 18,
+    color: COLORS.accent,
+  },
   buttonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#000",
+    color: COLORS.darkText,
   },
   glowLabel: {
-    color: "#FFFFFF",
+    color: COLORS.textLight,
     fontSize: 14,
     marginBottom: 6,
     fontWeight: "500",
@@ -50,15 +151,112 @@ export const styles = StyleSheet.create({
     textShadowRadius: 12,
   },
   card: {
-    backgroundColor: "#092356",
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: COLORS.cardBackground,
+    padding: 10,
     marginVertical: 8,
+    ...BORDER,
+    borderRadius: 2,
+  },
+  mainQuestCard: {
+    backgroundColor: COLORS.cardBackground,
+    ...BORDER,
+    borderTopWidth: 1,
+    borderRadius: 2,
+    minHeight: 150,
+    padding: 12,
+  },
+  mainQuestHeader: {
+    minHeight: 24,
+    borderRadius: 2,
+    marginBottom: 8,
+    justifyContent: "center",
+  },
+  mainQuestRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  mainQuestText: {
+    color: COLORS.accent,
+    fontSize: 14,
+  },
+  mainQuestTitle: {
+    color: "#FFD166",
+    fontSize: 24,
+    textAlign: "center",
+    marginBottom: 5,
+    textShadowColor: "rgba(255, 209, 102, 0.8)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+  },
+  sideQuestTitle: {
+    fontSize: 20,
+    marginBottom: 10,
+    textAlign: "center",
+    color: COLORS.accent,
+    textShadowColor: "rgba(159, 218, 239, 0.8)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  cardPressable: {
+    width: 72,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+  },
+  cardPressableShape: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+  },
+  cardPressableText: {
+    color: COLORS.darkText,
+    fontWeight: "600",
+  },
+  filterRow: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    backgroundColor: COLORS.cardBackground,
+    ...BORDER,
+    borderTopWidth: 0,
+    borderBottomWidth: 0,
+  },
+  filterRowImage: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  filterColumn: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    maxWidth: "60%",
+  },
+  filterPressable: {
+    width: 160,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  filterPressableShape: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+  },
+  filterPressableText: {
+    color: COLORS.darkText,
+    fontWeight: "600",
   },
   questTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#62D5F8",
+    color: COLORS.textTitle,
     marginBottom: 4,
   },
   unit: {
@@ -68,38 +266,68 @@ export const styles = StyleSheet.create({
   progress: {
     marginTop: 6,
     fontSize: 14,
-    color: "#9FDAEF",
+    color: COLORS.accent,
+    paddingLeft: 10,
   },
   empty: {
-    color: "#aaa",
+    color: COLORS.mediumGray,
     fontSize: 16,
+    textAlign: "center",
   },
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    color: "#9FDAEF",
+    color: COLORS.accent,
   },
   deadLine: {
-    color: "#4F7097",
+    color: COLORS.textMuted,
     marginTop: 6,
     fontSize: 14,
   },
+  progressBarTrack: {
+    height: 20,
+    borderRadius: 50,
+    backgroundColor: "#26282B",
+    overflow: "hidden",
+    width: "100%",
+    alignSelf: "flex-start",
+    justifyContent: "center",
+    marginTop: 10,
+    marginBottom: 10,
+    marginLeft: 0,
+    marginRight: 0,
+    padding: 5,
+  },
+  progressBarFill: {
+    height: "100%",
+    backgroundColor: COLORS.textTitle,
+    alignSelf: "flex-start",
+    borderRadius: 50,
+  },
 })
-
 export const QuestDetails = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: COLORS.cardBackground,
+    ...BORDER,
+    borderRadius: 14,
+    width: "100%",
+    height: "100%",
+    padding: 0,
+  },
   detailsContent: {
     width: "100%",
-    backgroundColor: "#092356",
+    backgroundColor: COLORS.cardBackground,
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     padding: 20,
     borderRadius: 14,
-    marginBottom: 18,
   },
   questUnits: {
     marginBottom: 20,
-    padding: 2
+    padding: 2,
+    justifyContent: "center",
   },
   sectionLabel: {
     flexDirection: "row",
@@ -110,67 +338,384 @@ export const QuestDetails = StyleSheet.create({
   sectionLabelLeft: {
     fontSize: 16,
     paddingRight: 14,
-    color: "#ffffff",
+    color: COLORS.textLight,
   },
 
   sectionLabelRight: {
     fontSize: 14,
     paddingRight: 1,
-    color: "#ffffff",
+    color: COLORS.textLight,
   },
   questTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#62D5F8",
+    color: COLORS.textTitle,
     marginBottom: 50,
     alignSelf: "center",
   },
+  detailsQuestTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: COLORS.textLight,
+    marginBottom: 50,
+    alignSelf: "center",
+    marginTop: 50,
+  },
   progressContainer: {
-    // NEW
     flexDirection: "row",
     alignItems: "center",
   },
 
   arrowColumn: {
-    // NEW
     marginLeft: 8,
     alignItems: "center",
+    justifyContent: "center",
+  },
+  footer: {
+    marginTop: "auto",
+    marginBottom: 60,
+  },
+  header: {
+    minHeight: 100,
     justifyContent: "center",
   },
 })
 
 export const text = StyleSheet.create({
   normal: {
-    color: "#FFFFFF",
+    color: COLORS.textLight,
     fontSize: 16,
-    width: "50%",
-    alignSelf: "center",
+    textAlign: "center",
   },
 
   dummyText: {
-    color: "#4F7097",
+    color: COLORS.textMuted,
   },
 
   small: {
-    // NEW
-    color: "#CCCCCC",
+    color: COLORS.lightGray,
     fontSize: 13,
   },
 
   warning: {
-    // NEW
-    color: "#FF4C4C",
+    color: COLORS.warning,
     fontWeight: "bold",
   },
 
   success: {
-    // NEW
-    color: "#4CFF88",
+    color: COLORS.success,
     fontWeight: "600",
+  },
+
+  level: {
+    color: COLORS.hunter,
+    fontWeight: "600",
+    textShadowColor: "rgba(20, 104, 215, 0.8)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
+  },
+  name: {
+    color: COLORS.accent,
+    fontWeight: "600",
+    textShadowColor: "rgba(159, 218, 239, 0.8)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
+  },
+  gold: {
+    color: COLORS.gold,
   },
 })
 
+export const home = StyleSheet.create({
+  questListContainer: {
+    flex: 0.5,
+    backgroundColor: COLORS.cardBackground,
+    ...BORDER,
+    borderTopWidth: 0,
+    borderRightWidth: 1,
+    borderLeftWidth: 1,
+    borderRadius: 1,
+  },
+  footer: {
+    backgroundColor: COLORS.cardBackground,
+    ...BORDER,
+    borderBottomRightRadius: 10,
+    borderBottomLeftRadius: 10,
+  },
+  mainQuestContainer: {
+    backgroundColor: COLORS.cardBackground,
+    ...BORDER,
+    borderTopWidth: 1,
+    borderBottomWidth: 0,
+    padding: 20,
+    justifyContent: "flex-start",
+  },
+  profileContainer: {
+    backgroundColor: COLORS.cardBackground,
+    ...BORDER,
+    borderBottomWidth: 0,
+    padding: 20,
+    borderTopRightRadius: 20,
+    borderTopLeftRadius: 20,
+  },
+  hunterLabel: {
+    backgroundColor: "#26282B",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    gap: 20,
+    borderRadius: 50,
+  },
+})
 
-export default function Warning({text}) {
+export default function Warning({ text }) {
   return <Text style={{ color: "red", fontWeight: "bold" }}>{text}</Text>
 }
+
+export const errStyles = StyleSheet.create({
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    zIndex: 9999,
+  },
+  card: {
+    width: "82%",
+    minHeight: 140,
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    backgroundColor: "rgba(9, 35, 86, 0.95)",
+    borderWidth: 1,
+    borderColor: "#FF4C4C",
+    shadowColor: "#000",
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+  },
+  text: {
+    color: "#FF4C4C",
+    fontSize: 18,
+    lineHeight: 24,
+    textAlign: "center",
+  },
+})
+
+export const questInfoStyles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "center",
+  },
+  levelBox: {
+    width: 45,
+    height: 44,
+    backgroundColor: "#0C2C5F",
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
+  },
+  levelCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 50,
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  levelText: {
+    color: COLORS.textLight,
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  labelBox: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    backgroundColor: COLORS.cardBackground,
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+    width: "50%",
+    textAlign: "center",
+  },
+  labelText: {
+    color: COLORS.textLight,
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+    textShadowColor: "rgba(98, 213, 248, 0.9)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+    textAlign: "center",
+    maxHeight: 1,
+  },
+})
+
+export const rewardStyles = StyleSheet.create({
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    zIndex: 9999,
+  },
+  card: {
+    width: "82%",
+    minHeight: "40%",
+    paddingVertical: 20,
+    paddingHorizontal: 22,
+    borderRadius: 14,
+    backgroundColor: "rgba(9, 35, 86, 0.95)",
+    borderWidth: 1,
+    borderColor: "#4CFF88",
+    shadowColor: "#000",
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+  },
+  title: {
+    color: "#4CFF88",
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  text: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    lineHeight: 24,
+    textAlign: "center",
+    marginTop: 100,
+  },
+})
+
+export const user = StyleSheet.create({
+  inventoryContainer: {
+    flex: 1,
+    width: "100%",
+    backgroundColor: COLORS.cardBackground,
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+    borderBottomWidth: 0,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+  },
+  inventoryFilterRow: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 12,
+    borderBottomWidth: 2,
+    borderColor: COLORS.accent,
+  },
+  inventoryFilterPressable: {
+    flex: 1,
+    height: 34,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  inventoryFilterShape: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+  },
+  inventoryFilterText: {
+    color: COLORS.darkText,
+    fontWeight: "600",
+    fontSize: 12,
+  },
+  gridList: {
+    flex: 1,
+    width: "100%",
+    marginTop: 16,
+  },
+  gridContent: {
+    paddingBottom: 24,
+    flexGrow: 1,
+  },
+  gridColumn: {
+    justifyContent: "space-between",
+    marginBottom: 14,
+  },
+  gridItemWrapper: {
+    flex: 1,
+    maxWidth: "48%",
+  },
+  box: {
+    width: "100%",
+    backgroundColor: COLORS.cardBackground,
+    minHeight: 170,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 18,
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+  },
+  imageWrapper: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  meta: {
+    width: "100%",
+    alignItems: "center",
+    gap: 4,
+  },
+  itemName: {
+    color: COLORS.textLight,
+    fontSize: 14,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  itemQuantity: {
+    color: COLORS.textTitle,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  itemImage: {
+    width: "70%",
+    height: "40%",
+    marginVertical: 16,
+    borderRadius: 30,
+  },
+  container: {
+    backgroundColor: COLORS.cardBackground,
+    ...BORDER,
+    borderTopWidth: 1,
+    borderRadius: 10,
+    height: "80%",
+    padding: 20,
+    alignItems: "center",
+  },
+  header: {
+    marginTop: 12,
+    marginBottom: 24,
+  },
+  pressableButton: {
+    backgroundColor: COLORS.success,
+    borderRadius: 10,
+    alignItems: "center",
+    alignSelf: "center",
+    margin: 15,
+    width: "50%",
+    padding: 5,
+  },
+})
