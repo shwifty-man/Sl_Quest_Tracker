@@ -1,13 +1,13 @@
 import pool from "../../DB/0_config/db.js"
 
 export function expToNextLevel(input) {
-    let level = Number(input)
+  let level = Number(input)
   return level * 100
 }
 
 export async function createDeadline() {
   try {
-    const sql = `SELECT now() + interval '1 hours' AS deadline;`
+    const sql = `SELECT now() + interval '1 minute' AS deadline;`
     const results = await pool.query(sql)
     return results.rows[0].deadline
   } catch (err) {

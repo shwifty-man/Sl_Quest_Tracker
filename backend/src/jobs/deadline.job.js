@@ -2,8 +2,11 @@ import cron from "node-cron"
 import pool from "../../DB/0_config/db.js"
 import { sendSseEvent } from "../services/sse.service.js"
 
+/*
+  refactor function to use eventEmitter (find exact name)
+*/
 
-// Run a check every minute to see if user has failed a quest and activate penalty
+
 export async function startCronJob() {
   console.info("Deadline job started (runs every 10 seconds)")
   cron.schedule("*/10 * * * * *", async () => {
