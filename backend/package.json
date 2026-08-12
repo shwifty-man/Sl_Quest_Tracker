@@ -6,10 +6,10 @@
   "scripts": {
     "dev": "nodemon --watch src --watch DB --ext js,json server.js",
     "start": "node server.js",
-    "seed:shop": "node DB/seedShop.js",
-    "seed:badges": "node DB/seedBadges.js",
-    "seed:badge-items": "node DB/seedBadgeItems.js",
-    "seed:user-badge-inventory": "node DB/seedUserBadgeInventory.js"
+    "seed:shop": "node DB/seeds/seedShop.js",
+    "seed:badges": "node DB/seeds/seedBadges.js",
+    "seed:badge-items": "node DB/seeds/seedBadgeItems.js",
+    "seed:user-badge-inventory": "node DB/seeds/seedUserBadgeInventory.js"
   },
   "keywords": [],
   "author": "",
