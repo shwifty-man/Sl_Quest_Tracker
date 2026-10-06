@@ -3,6 +3,7 @@ import { QuestContext } from "../Providers/QuestProvider"
 import { useContext } from "react"
 import { UserContext } from "../Providers/UserProvider"
 import { ErrorContext } from "../Providers/ErrorProvider"
+import { SSEContext } from "../Providers/SSEProvider.js"
 
 // src/2_services/context.js
 export function useAuth() {
@@ -21,4 +22,10 @@ export function useUser() {
 
 export function useError() {
   return useContext(ErrorContext)
+}
+
+export function useSSE() {
+
+  return useContext(SSEContext);
+
 }

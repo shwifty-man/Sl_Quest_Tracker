@@ -16,18 +16,21 @@ import { AuthProvider } from "./src/Providers/AuthProvider"
 import { QuestProvider } from "./src/Providers/QuestProvider"
 import { UserProvider } from "./src/Providers/UserProvider"
 import { ErrorProvider } from "./src/Providers/ErrorProvider"
+import { SSEProvider } from "./src/Providers/SSEProvider"
 
 function Root() {
   return (
-    <ErrorProvider>
-      <AuthProvider>
-        <UserProvider>
-          <QuestProvider>
-            <App />
-          </QuestProvider>
-        </UserProvider>
-      </AuthProvider>
-    </ErrorProvider>
+    <SSEProvider>
+      <ErrorProvider>
+        <AuthProvider>
+          <UserProvider>
+            <QuestProvider>
+              <App />
+            </QuestProvider>
+          </UserProvider>
+        </AuthProvider>
+      </ErrorProvider>
+    </SSEProvider>
   )
 }
 
