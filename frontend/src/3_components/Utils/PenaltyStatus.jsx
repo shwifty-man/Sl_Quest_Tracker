@@ -9,17 +9,17 @@ const PenaltyStatus = ({ penalty, setPenalty }) => {
     const [timeRemaining, setTimeRemaining] = useState(0)
 
     useEffect(() => {
-        if (!penalty?.deadline) {
+        if (!penalty?.penaltyDeadline) {
             setTimeRemaining(0)
             return
         }
 
         const updateTime = () => {
-            const remaining = new Date(penalty.deadline).getTime() - Date.now()
+            const remaining = new Date(penalty.penaltyDeadline).getTime() - Date.now()
 
             if (remaining <= 0) {
                 setTimeRemaining(0)
-                setPenalty({ active: false, deadline: null })
+                setPenalty({ active: false, penaltyDeadline: null })
                 return
             }
 
@@ -31,10 +31,10 @@ const PenaltyStatus = ({ penalty, setPenalty }) => {
         const interval = setInterval(updateTime, 1000)
 
         return () => clearInterval(interval)
-    }, [penalty?.deadline])
+    }, [penalty?.penaltyDeadline])
 
     let color
-    if (!penalty.active) {
+    if (!penalty?.active) {
         color = '#4C73FF'
     } else {
         color = '#FF4D6D'
@@ -45,10 +45,14 @@ const PenaltyStatus = ({ penalty, setPenalty }) => {
             style={[
                 styles.card,
                 {
-                    flex: 0.2,
-                    padding: 14,
+                    flex: 0.25,
                     alignItems: 'flex-start',
-                    padding: 20
+                    justifyContent: "center",
+                    padding: 20,
+                    backgroundColor: '#00142E',
+                    borderRadius: 10,
+                    borderWidth: 1,
+                    borderColor: '#152D53'
                 }
             ]}
         >
