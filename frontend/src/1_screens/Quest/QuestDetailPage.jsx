@@ -25,7 +25,8 @@ export default function QuestDetailPage({ route, navigation }) {
   const [quest, setQuest] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const { reward, getQuests } = useQuests()
+  const { reward, getUserQuests, updateQuest } = useQuests()
+  const { setError } = useError()
 
   useEffect(() => {
 
@@ -56,34 +57,9 @@ export default function QuestDetailPage({ route, navigation }) {
 
   }, [])
 
-  async function markQuest() {
-
-    try {
-
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
-
-      console.log("QUEST START:", new Date(quest.start).toISOString());
-      console.log("QUEST DEADLINE: ", new Date(quest?.deadline).toISOString());
-      console.log("NOW:", new Date().toISOString());
-
-      const data = await fetchUpdateProgress(token, questId)
-
-      console.log("marked quest id: ", data)
-      setQuest(data)
-    } catch (err) {
-
-      setError(err)
-
-    } finally {
-      setLoading(false)
-    }
-
-  }
-
   if (loading) {
     return <ActivityIndicator style={styles.progress} size="large" />
   }
-
 
   const now = new Date().getTime();
 
@@ -103,7 +79,7 @@ export default function QuestDetailPage({ route, navigation }) {
     Math.floor((end - start) / MS_PER_HOUR)
   );
 
-  console.log(reward)
+  console.log("reward", reward)
 
   return (
 
@@ -116,7 +92,7 @@ export default function QuestDetailPage({ route, navigation }) {
       {/* Header */}
       <View style={[questDetailsStyles.header, { flexDirection: 'row', alignItems: 'center', gap: 30, alignSelf: 'center', width: '100%', height: 60, position: 'relative' }]}>
 
-        <BackArrow navigation={navigation} passedFunction={getQuests} />
+        <BackArrow navigation={navigation} passedFunction={getUserQuests} />
 
         <Text style={questDetailsStyles.headerTitle}>
           QUEST DETAILS
@@ -301,7 +277,19 @@ export default function QuestDetailPage({ route, navigation }) {
       {/* Complete */}
       <View style={questDetailsStyles.bottomContainer}>
 
-        <Pressable style={[questDetailsStyles.completeButton, quest.is_completed === true && questDetailsStyles.disabledButton]} onPress={quest.is_completed === false ? markQuest : null}>
+        <Pressable
+          style={[
+            questDetailsStyles.completeButton,
+            (
+              quest.status !== 'pending' ||
+              new Date(quest.start).getTime() > Date.now()
+            ) ? questDetailsStyles.disabledButton : { backgroundColor: "#145AE8" }
+          ]}
+          onPress={
+            quest.is_completed === false
+              ? () => updateQuest(questId)
+              : null
+          }>
           <Text style={questDetailsStyles.completeButtonText}>
             Mark as Complete
           </Text>
@@ -309,6 +297,6 @@ export default function QuestDetailPage({ route, navigation }) {
 
       </View>
 
-    </View>
+    </View >
   )
 }
