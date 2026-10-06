@@ -73,7 +73,7 @@ function HomeHeaderProfile({ name, exp, level, requiredExp, showBackground = tru
 
                     <ProgressBar
                         numOne={currentExp}
-                        numTwo={totalRequiredExp}
+                        numTwo={currentLevel}
                         exp={true}
                     />
                 </View>
