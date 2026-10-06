@@ -1,5 +1,5 @@
 import { FlatList, Text, Pressable, View } from "react-native"
-import { QuestDetails, styles } from "../../2_services/styles"
+import { styles } from "../../2_services/styles"
 import { questDetailsStyles } from "../../Styles/questDetailsStyles"
 import QuestCard from "./QuestCard"
 

@@ -223,7 +223,6 @@ export const questDetailsStyles = StyleSheet.create({
     completeButton: {
         height: 46,
         borderRadius: 9,
-        backgroundColor: "#145AE8",
         alignItems: "center",
         justifyContent: "center",
     },
