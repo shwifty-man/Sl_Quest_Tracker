@@ -6,16 +6,14 @@ import { useCallback, useEffect } from "react";
 import { startAppWatcherService } from "../2_services/handleOverlay"
 
 import HomeHeaderProfile from "../3_components/Home/HomeHeaderProfile.jsx"
-import SettingsIcon from "../3_components/SettingsIcon"
-import QuestsList from "./Quest/AllQuest"
 import NavBar from "../3_components/Utils/NavBar.jsx"
 import QuestList from "../3_components/Quests/QuestList.jsx"
 import PenatlyStatus from "../3_components/Utils/PenaltyStatus.jsx"
 
 
 const Home = () => {
-  const { hunterName, progress, getUserProfile } = useUser()
-  const { quests, getQuests, penaltyStatus, setPenaltyStatus } = useQuests()
+  const { hunterName, getUserProfile, progress } = useUser()
+  const { quests, getUserQuests, penaltyStatus, setPenaltyStatus } = useQuests()
   const { token } = useAuth()
   const navigation = useNavigation();
 
@@ -23,23 +21,22 @@ const Home = () => {
     useCallback(() => {
       if (!token) return;
 
-      const loadQuests = async () => {
-        await getQuests();
-      };
+      getUserProfile(token);
+    }, [token, getUserProfile])
+  );
 
-      loadQuests();
-    }, [token, getQuests])
+  useFocusEffect(
+    useCallback(() => {
+      if (!token) return;
+
+      getUserQuests();
+    }, [token, getUserQuests])
   );
 
   useEffect(() => {
     if (!token) return;
 
-    const load = async () => {
-      await getUserProfile(token);
-      await startAppWatcherService();
-    };
-
-    load();
+    startAppWatcherService();
   }, [token]);
 
   return (
