@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Pressable } from "react-native";
 import { styles } from "../../2_services/styles.js";
-import ProgressBar from "./Progressbar.jsx";
-import ExpPill from "../Utils/ExpPill.jsx";
 import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
@@ -47,7 +45,7 @@ const QuestCard = ({
     statusIcon = "clock-outline";
     statusColor = "rgb(49, 44, 30)";
     statusIconColor = "#FFD55B";
-  } else if (status = "failed") {
+  } else if (status === "failed") {
     statusIcon = "close";
     statusColor = "#241113";
     statusIconColor = "#E67481";
