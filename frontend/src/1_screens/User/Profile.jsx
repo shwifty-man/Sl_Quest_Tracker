@@ -16,6 +16,7 @@ import { useAuth, useUser } from "../../2_services/context"
 import HomeHeaderProfile from "../../3_components/Home/HomeHeaderProfile.jsx"
 import NavBar from "../../3_components/Utils/NavBar.jsx"
 import HeaderTitle from "../../3_components/Utils/headerTitle.jsx"
+import Inventory from "../Utils/Inventory"
 
 import { useNavigation } from "@react-navigation/native"
 
@@ -31,14 +32,10 @@ const Profile = () => {
     const navigation = useNavigation()
 
     useEffect(() => {
-
-        async function loadProfile() {
-            await getUserProfile(token)
+        if (token) {
+            getUserProfile(token)
         }
-
-        loadProfile()
-
-    }, [])
+    }, [token, getUserProfile])
 
     function handleNav(path) {
         navigation.navigate(path)
@@ -145,6 +142,8 @@ const Profile = () => {
                     </Pressable>
 
                 </View>
+
+                <Inventory />
 
             </View>
 
