@@ -11,7 +11,7 @@ const NavBar = () => {
     const active = route.name;
 
     return (
-        <View style={[home.footer]}>
+        <View style={[home.footer, { height: 80, justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20 }]}>
             <Pressable
                 onPress={() => navigation.navigate("Home")}
                 style={[home.NavPressable, { color: '#000' }]}
