@@ -1,6 +1,6 @@
 import { StyleSheet, Text } from "react-native"
 
-const COLORS = {
+export const COLORS = {
   background: "#040E29",
   cardBackground: "#092356",
   accent: "#9FDAEF",
@@ -22,6 +22,28 @@ const BORDER = {
   borderColor: COLORS.accent,
   borderWidth: 1,
 }
+
+export const globalStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 16,
+    backgroundColor: COLORS.background,
+  },
+
+  innerContainer: {
+    backgroundColor: "#092356",
+    flex: 1,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+
+    borderColor: '#12417E',
+    borderStyle: 'solid',
+    borderWidth: 1,
+    marginTop: 20,
+    justifyContent: 'center'
+  }
+})
 
 export const styles = StyleSheet.create({
   container: {
@@ -151,11 +173,12 @@ export const styles = StyleSheet.create({
     textShadowRadius: 12,
   },
   card: {
-    backgroundColor: COLORS.cardBackground,
     padding: 10,
-    marginVertical: 8,
-    ...BORDER,
-    borderRadius: 2,
+    borderRadius: 10,
+    backgroundColor: '#031936',
+    borderWidth: 1,
+    borderColor: '#152D53',
+    borderStyle: 'solid'
   },
   mainQuestCard: {
     backgroundColor: COLORS.cardBackground,
@@ -285,25 +308,23 @@ export const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 14,
   },
-  progressBarTrack: {
-    height: 20,
-    borderRadius: 50,
-    backgroundColor: "#26282B",
-    overflow: "hidden",
+  progressBarTrackWrapper: {
     width: "100%",
-    alignSelf: "flex-start",
+    alignItems: "center",
     justifyContent: "center",
-    marginTop: 10,
-    marginBottom: 10,
-    marginLeft: 0,
-    marginRight: 0,
-    padding: 5,
   },
+
+  progressBarTrack: {
+    width: "100%",
+    height: 12,
+    backgroundColor: "#101B32",
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+
   progressBarFill: {
     height: "100%",
-    backgroundColor: COLORS.textTitle,
-    alignSelf: "flex-start",
-    borderRadius: 50,
+    borderRadius: 10,
   },
 })
 export const QuestDetails = StyleSheet.create({
@@ -439,8 +460,10 @@ export const home = StyleSheet.create({
   footer: {
     backgroundColor: COLORS.cardBackground,
     ...BORDER,
+    borderColor: '#12417E',
     borderBottomRightRadius: 10,
     borderBottomLeftRadius: 10,
+    flexDirection: 'row'
   },
   mainQuestContainer: {
     backgroundColor: COLORS.cardBackground,
@@ -467,6 +490,10 @@ export const home = StyleSheet.create({
     gap: 20,
     borderRadius: 50,
   },
+  NavPressable: {
+    alignItems: "center",
+    justifyContent: "center",
+  }
 })
 
 export default function Warning({ text }) {
@@ -605,11 +632,9 @@ export const rewardStyles = StyleSheet.create({
 
 export const user = StyleSheet.create({
   inventoryContainer: {
-    flex: 1,
-    width: "100%",
-    backgroundColor: COLORS.cardBackground,
+    height: '80%',
+    width: "80%",
     borderWidth: 1,
-    borderColor: COLORS.accent,
     borderBottomWidth: 0,
     paddingVertical: 16,
     paddingHorizontal: 12,
@@ -645,11 +670,10 @@ export const user = StyleSheet.create({
   gridList: {
     flex: 1,
     width: "100%",
-    marginTop: 16,
   },
   gridContent: {
     paddingBottom: 24,
-    flexGrow: 1,
+    flexGrow: 0.5,
   },
   gridColumn: {
     justifyContent: "space-between",
