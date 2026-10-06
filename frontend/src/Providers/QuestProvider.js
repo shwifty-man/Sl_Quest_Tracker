@@ -1,177 +1,330 @@
-import React, { createContext, useState, useEffect, useContext } from "react"
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react"
+
 import {
-  fetchCreateQuests,
-  fetchPenaltyForQuest,
-  fetchQuestById,
   fetchQuests,
+  fetchCreateQuests,
   fetchUpdateProgress,
-} from "../4_api/quests.api"
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import {
-  getCachedQuests,
-  setCachedQuests,
-  STORAGE_KEYS,
-} from "../2_services/storage"
-import EventSource from "react-native-sse"
+} from "../4_api/quests.api.js"
+
+import { useSSE } from "../2_services/context"
+
+import { AuthContext } from "./AuthProvider"
 import { ErrorContext } from "./ErrorProvider"
 
 export const QuestContext = createContext()
 
 export function QuestProvider({ children }) {
-  // 2a. State for user, token, and loading
-  const [quests, setQuests] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [trackedQuestId, setTrackedQuestId] = useState(null)
-  const { setError } = useContext(ErrorContext)
 
-  const getQuests = React.useCallback(async () => {
-    // Get all quests
-    try {
-      setIsLoading(true)
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
-      const allQuests = await fetchQuests(token)
-      setQuests(allQuests)
-      await setCachedQuests(allQuests)
-      return allQuests
-    } catch (err) {
-      // Don't surface background fetch errors to the global ErrorOverlay
-      console.warn("[quests] Failed to fetch quests (background):", err)
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+  const [quests, setQuests] = useState([])
+  const [loadingForQuests, setLoadingForQuests] = useState(false)
+  const [penaltyStatus, setPenaltyStatus] = useState(null)
+  const [reward, setReward] = useState(null)
+
+  const { token } = useContext(AuthContext)
+  const { setError } = useContext(ErrorContext)
+  const { es } = useSSE();
 
   useEffect(() => {
-    let sse
 
-    async function connectToSSE() {
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
-      if (!token) return
+    if (!es) return;
 
-      await getQuests()
+    const handlePenaltyApplied = (event) => {
 
-      sse = new EventSource(
-        `${process.env.EXPO_PUBLIC_BACKEND_URL}/events?token=${token}`,
-      )
+      const data = JSON.parse(event.data);
 
-      sse.addEventListener("penalty_applied", (event) => {
-        const data = JSON.parse(event.data)
-        console.info("[quests] Penalty update received")
+      setPenaltyStatus(data);
+      setQuests((currentQuests) =>
+        currentQuests.map((quest) =>
+          String(quest.id) === String(data.questId)
+            ? { ...quest, status: data.status }
+            : quest
+        )
+      );
 
-        setQuests((prev) => {
-          const exists = prev.some((q) => q.id === data.questId)
-          if (exists) {
-            return prev.map((q) =>
-              q.id === data.questId ? { ...q, status: data.status } : q,
-            )
-          }
-          return [...prev, data]
-        })
-      })
+    };
 
-      sse.addEventListener("error", (err) => {
-        console.warn("[quests] SSE connection error", err)
-      })
-    }
-
-    connectToSSE()
+    es.addEventListener(
+      "penalty_applied",
+      handlePenaltyApplied
+    );
 
     return () => {
-      if (sse) sse.close()
-    }
-  }, [getQuests])
 
-  const getQuestById = async (questId) => {
-    try {
-      setIsLoading(true)
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
-      const quest = await fetchQuestById(token, questId)
-      setQuests(quest)
-      await setCachedQuests(quest)
-      return quest
-    } catch (err) {
-      setError(err)
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }
+      es.removeEventListener(
+        "penalty_applied",
+        handlePenaltyApplied
+      );
 
-  const questCreation = async (questTitle, type, unitName, targetValue) => {
-    try {
-      // Get the token
-      setIsLoading(true)
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
-      const newQuest = await fetchCreateQuests(token, {
-        questTitle,
-        type,
-        unitName,
-        targetValue,
-      })
-      setQuests((prev) => [newQuest, ...prev])
+    };
 
-      return newQuest
-    } catch (err) {
-      setError(err)
-      console.error("[quests] Failed to create quest", err)
-      return
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const updateProgress = async (questId, newValue) => {
-    try {
-      setIsLoading(true)
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
-      const newVal = await fetchUpdateProgress(token, questId, newValue)
-
-      setQuests((prev) => prev.map((q) => (q.id === newVal.id ? newVal : q)))
-
-      return newVal
-    } catch (err) {
-      setError(err)
-      console.error("[quests] Failed to update quest progress", err)
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const getQuestPenalty = React.useCallback(async () => {
-    try {
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN)
-      const penalty = await fetchPenaltyForQuest(token)
-
-      return penalty || null
-    } catch (err) {
-      // Background poll failure — don't show global overlay
-      console.warn("[quests] Failed to fetch quest penalty (background):", err)
-      return null
-    }
-  }, [])
+  }, [es]);
 
   useEffect(() => {
-    async function loadQuests() {
-      await getQuests()
-    }
-    loadQuests()
-  }, [getQuests])
 
-  // 3. Provide state & actions to children
+    if (!es) return
+
+    const handleRewardGranted = (event) => {
+
+      const data = JSON.parse(event.data)
+
+      setReward(data)
+
+    }
+
+    es.addEventListener(
+      "reward_granted",
+      handleRewardGranted
+    )
+
+    return () => {
+
+      es.removeEventListener(
+        "reward_granted",
+        handleRewardGranted
+      )
+
+    }
+
+  }, [es])
+
+  /*
+   * Get all user quests.
+   */
+  const getUserQuests = useCallback(
+    async (activeToken) => {
+
+      const effectiveToken =
+        activeToken || token
+
+      if (!effectiveToken) {
+        setQuests([])
+        return []
+      }
+
+      try {
+
+        setLoadingForQuests(true)
+
+        const results = await fetchQuests(effectiveToken)
+
+        setQuests(
+          Array.isArray(results)
+            ? results
+            : []
+        )
+
+        return results
+
+      } catch (err) {
+
+        setError(
+          err?.message ||
+          "Unable to load quests."
+        )
+
+        throw err
+
+      } finally {
+
+        setLoadingForQuests(false)
+
+      }
+    },
+    [token, setError],
+  )
+
+
+  /*
+   * Create a quest.
+   */
+  const questCreation = useCallback(
+    async (questData, activeToken) => {
+
+      const effectiveToken = activeToken || token
+
+      if (!effectiveToken) {
+        throw new Error("No authentication token.")
+      }
+
+      try {
+
+        const result = await fetchCreateQuests(effectiveToken, questData)
+
+        /*
+         * Refresh the quest list after creation.
+         */
+        await getUserQuests(effectiveToken)
+
+        return result
+
+      } catch (err) {
+
+        setError(err?.message || "Unable to create quest.")
+
+        throw err
+      }
+    },
+    [token, getUserQuests, setError],
+  )
+
+
+  /*
+   * Update a quest.
+   */
+  const updateQuest = useCallback(
+    async (questId, activeToken) => {
+
+      const effectiveToken = activeToken || token
+
+      if (!effectiveToken) {
+        throw new Error("No authentication token.")
+      }
+
+      try {
+
+        const result = await fetchUpdateProgress(effectiveToken, questId)
+
+        await getUserQuests(effectiveToken)
+
+        return result
+
+      } catch (err) {
+
+        setError(
+          err?.message ||
+          "Unable to update quest."
+        )
+
+        throw err
+      }
+    },
+    [token, getUserQuests, setError],
+  )
+
+  const getQuestByFilter = useCallback(
+    (statusFilter, typeFilter, sortFilter) => {
+      let filteredQuests = [...quests]
+
+      if (statusFilter !== "All") {
+        filteredQuests = filteredQuests.filter(
+          (quest) =>
+            quest.status?.toLowerCase() ===
+            statusFilter.toLowerCase()
+        )
+      }
+
+      if (typeFilter !== "All") {
+        const normalizedType =
+          typeFilter === "Once"
+            ? "One-time"
+            : typeFilter
+
+        filteredQuests = filteredQuests.filter(
+          (quest) =>
+            quest.type?.toLowerCase() ===
+            normalizedType.toLowerCase()
+        )
+      }
+
+      filteredQuests.sort((a, b) => {
+        const dateA = new Date(a.created_at)
+        const dateB = new Date(b.created_at)
+
+        return sortFilter === "Oldest"
+          ? dateA - dateB
+          : dateB - dateA
+      })
+
+      return filteredQuests
+    },
+    [quests],
+  )
+
+  /*
+   * Initial quest load.
+   *
+   * IMPORTANT:
+   * Only token controls this effect.
+   * Do not add the callback functions to the
+   * dependency array or this can become a
+   * fetch -> state update -> rerender -> fetch loop.
+   */
+  useEffect(() => {
+
+    if (!token) {
+      setQuests([])
+      return
+    }
+
+    let cancelled = false
+
+    async function loadQuests() {
+
+      try {
+
+        setLoadingForQuests(true)
+
+        const results = await fetchQuests(token)
+
+        if (cancelled) return
+
+        setQuests(
+          Array.isArray(results)
+            ? results
+            : []
+        )
+
+      } catch (err) {
+
+        if (!cancelled) {
+
+          setError(
+            err?.message ||
+            "Unable to load quests."
+          )
+
+        }
+
+      } finally {
+
+        if (!cancelled) {
+          setLoadingForQuests(false)
+        }
+
+      }
+    }
+
+    loadQuests()
+
+    return () => {
+      cancelled = true
+    }
+
+  }, [token])
+
+
   return (
     <QuestContext.Provider
       value={{
         quests,
-        isLoading,
-        trackedQuestId,
-        getQuests,
-        getQuestById,
+        penaltyStatus,
+        setPenaltyStatus,
+        loadingForQuests,
+        reward,
+
+        getUserQuests,
+        getQuestByFilter,
+
         questCreation,
-        updateProgress,
-        getQuestPenalty,
-        setTrackedQuestId,
+        updateQuest,
+
+        setQuests,
       }}
     >
       {children}
