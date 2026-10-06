@@ -39,6 +39,11 @@ export default function Stats() {
         style={[
           globalStyles.innerContainer,
           styles.background,
+          {
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            overflow: "hidden",
+          }
         ]}
         resizeMode="cover"
       >
