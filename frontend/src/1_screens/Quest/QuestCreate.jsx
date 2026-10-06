@@ -44,7 +44,7 @@ const CreateQuest = ({ navigation }) => {
   async function handleQuestCreation() {
     if (questTitle && questTime && deadline && questType && difficulty) {
       try {
-        await questCreation(questTitle, questTime, deadline, questType, questDescription, difficulty)
+        await questCreation({ questTitle, questTime, deadline, questType, questDescription, difficulty })
         navigation.navigate("Home")
       } catch (err) {
         console.error(err)
