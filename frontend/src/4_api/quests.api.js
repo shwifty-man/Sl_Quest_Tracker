@@ -51,9 +51,11 @@ export async function fetchCreateQuests(token, credentials) {
         body: JSON.stringify({
           questData: {
             questTitle: credentials.questTitle.trim(),
-            type: credentials.type,
-            unitName: credentials.unitName.trim(),
-            targetValue: Number(credentials.targetValue),
+            time: credentials.questTime,
+            deadline: credentials.deadline,
+            type: credentials.questType,
+            questDescription: credentials.questDescription.trim(),
+            difficulty: credentials.difficulty.name,
           },
         }),
       },
@@ -72,32 +74,47 @@ export async function fetchCreateQuests(token, credentials) {
   }
 }
 
-export async function fetchUpdateProgress(token, questId, newValue) {
-  try {
-    const currentValue = Number(newValue)
-    if (isNaN(currentValue)) throw new Error("Invalid quest value")
+export async function fetchUpdateProgress(token, questId) {
 
+  try {
+
+    const url =
+      `${process.env.EXPO_PUBLIC_BACKEND_URL}/quests/${questId}/update`
     const response = await fetch(
-      `${process.env.EXPO_PUBLIC_BACKEND_URL}/quests/${questId}/update`,
+      url,
       {
-        method: "POST",
+        method: "PUT",
+
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ currentValue }),
       },
     )
 
     const data = await response.json().catch(() => null)
 
     if (!response.ok) {
-      if (response.status === 401) throw new Error("Unauthorized")
-      throw new Error(data?.message || "Failed to update quest")
+
+      if (response.status === 401) {
+        throw new Error("Unauthorized")
+      }
+
+      throw new Error(
+        data?.message ||
+        `Failed to update quest (${response.status})`
+      )
     }
-    return data.quest
+
+    return data
+
   } catch (err) {
-    console.error("[quests.api] Failed to update quest progress", err)
+
+    console.error(
+      "[quests.api] Failed to update quest progress",
+      err
+    )
+
     throw err
   }
 }
