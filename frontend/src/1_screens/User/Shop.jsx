@@ -3,17 +3,14 @@ import {
   View,
   Text,
   FlatList,
-  Pressable,
   StyleSheet,
 } from "react-native";
 
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import { useUser } from "../../2_services/context";
-import { useNavigation } from '@react-navigation/native';
 
 import Card from "../../3_components/Utils/ItemCard";
 import NavBar from "../../3_components/Utils/NavBar.jsx";
-import BackArrow from "../../3_components/Utils/BackArrow.jsx"
 import HeaderTitle from "../../3_components/Utils/headerTitle.jsx"
 
 import { globalStyles } from "../../2_services/styles";
@@ -101,9 +98,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingTop: 10,
 
-    borderRadius: 20,
-
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     overflow: "hidden",
+    borderColor: '#12417E',
+    borderStyle: 'solid',
+    borderWidth: 1
   },
 
   title: {
