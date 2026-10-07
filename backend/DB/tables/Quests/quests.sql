@@ -6,13 +6,19 @@ CREATE TABLE IF NOT EXISTS quests (
 
     title TEXT NOT NULL,
     type TEXT NOT NULL CHECK (
-        type IN ('Daily', 'Weekly', 'One-Time')
+        type IN ('Daily', 'Weekly', 'One-time')
     ),
-    target_value INTEGER NOT NULL,
-    current_value INTEGER NOT NULL DEFAULT 0,
-    deadline TIMESTAMP WITH TIME ZONE,
+    start TIMESTAMP WITH TIME ZONE NOT NULL,
+    deadline TIMESTAMP WITH TIME ZONE NOT NULL,
     description TEXT,
+
     status TEXT NOT NULL DEFAULT 'pending',
+    reward JSONB NOT NULL DEFAULT '{}'::jsonb,
+    
+    difficulty TEXT NOT NULL DEFAULT 'Easy' CHECK (
+    difficulty IN ('Easy', 'Medium', 'Hard', 'Extreme')
+),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    completed_at TIMESTAMP WITH TIME ZONE,
     is_completed BOOLEAN DEFAULT FALSE
 );
