@@ -1,85 +1,131 @@
-import pool from "../../DB/0_config/db.js"
+import pool from "../../DB/config/db.js"
 
-export function expToNextLevel(input) {
-  let level = Number(input)
-  return level * 100
+export function expToNextLevel(level) {
+  return Number(level) * 100;
 }
 
-export async function createDeadline() {
+export function levelFromExp(exp) {
+  return Math.floor(
+    (Math.sqrt(1 + (8 * Number(exp)) / 100) - 1) / 2
+  ) + 1;
+}
+
+export function expRequiredForLevel(level) {
+  return ((Number(level) - 1) * Number(level) / 2) * 100
+}
+
+export async function createDeadline(questTime, questType) {
   try {
-    const sql = `SELECT now() + interval '1 minute' AS deadline;`
+    console.log("questTime, questType: ", questTime, questType)
+
+    if (!questTime || !questType) {
+      throw new Error("No questTime or no questType", questTime, questType);
+    }
+
+
+    let sql;
+
+    if (questType === "Daily") {
+      console.log(`QuestType is: ${questType}`)
+    } else if (questType === "Weekly") {
+      console.log(`QuestType is: ${questType}`)
+    } else if (questType === "One-time") {
+      console.log(`QuestType is: ${questType}`)
+    } else {
+      throw new Error("QuestType is not what i expected!", questType);
+    }
+
+
+    sql = `SELECT now() + interval '1 minute' AS deadline;`
     const results = await pool.query(sql)
-    return results.rows[0].deadline
+    const asfd = results.rows[0].deadline
+    console.log("Deadline: ", asfd)
+    return asfd
   } catch (err) {
     throw err
   }
 }
 
+export async function desideSchedule(type, client) {
+  try {
+    if (typeof type != string) throw new Error("Type is not a string: ", type);
+
+    let schedule;
+
+    switch (type) {
+      case "Daily":
+
+        console.log(`Type is: ${type}`)
+        break;
+      case "Weekly":
+        console.log(`Type is: ${type}`)
+        break;
+      case "One-Time":
+        console.log(`Type is: ${type}`)
+        break;
+      default:
+        console.log(`Type is: ${type}`)
+    }
+
+    // const sql = `SELECT now() + interval '1 minute' AS deadline;`
+    // const results = await client.query(sql)
+    // return results.rows[0].deadline
+  } catch (err) {
+    throw err
+  }
+}
+
+
 //User / EXP Functions
-export function computeExp(type, targetValue) {
-  const ranges = [
-    { max: 20, exp: 10 },
-    { max: 50, exp: 25 },
-    { max: 100, exp: 50 },
-    { max: 200, exp: 100 },
-    { max: Infinity, exp: 200 },
-  ]
+export function computeExp(time, difficulty) {
 
-  let exp = 0
-  for (let i = 0; i < ranges.length; i++) {
-    if (targetValue <= ranges[i].max) {
-      exp = ranges[i].exp
-      break
+  if (!time || !difficulty) {
+    throw new Error("Missing param");
+  }
+  let createdDeadline = new Date(time);
+  console.log("computeExp: ", time, difficulty)
+
+  const difficultySettings = {
+    Easy: {
+      timeReduction: 0,
+      xp: 50,
+      coins: 15
+    },
+    Medium: {
+      timeReduction: 15,
+      xp: 100,
+      coins: 25,
+    },
+    Hard: {
+      timeReduction: 30,
+      xp: 175,
+      coins: 3555,
+    },
+    Extreme: {
+      timeReduction: 45,
+      xp: 30000,
+      coins: 50000
     }
+  };
+
+  let reward = { exp: 0, coins: 0 }
+
+  const settings = difficultySettings[difficulty]
+
+  if (!settings) {
+    console.error("Difficulty isn't one I set")
+    throw new Error(`Diff doesn't match: ${difficulty}`)
   }
 
-  const coinRanges = [
-    { max: 10, coins: 5 },
-    { max: 15, coins: 10 },
-    { max: 20, coins: 15 },
-    { max: 30, coins: 20 },
-    { max: 40, coins: 25 },
-    { max: 50, coins: 40 },
-    { max: 60, coins: 50 },
-    { max: 100, coins: 60 },
-    { max: Infinity, coins: 80 },
-  ]
+  reward.exp += settings.xp
+  reward.coins += settings.coins
 
-  let coins = 0
-  for (let i = 0; i < coinRanges.length; i++) {
-    if (targetValue <= coinRanges[i].max) {
-      coins = coinRanges[i].coins
-      break
-    }
-  }
-
-  const rewardByType = {
-    Workout: { strength: 2, endurance: 1 },
-    Study: { focus: 2, discipline: 1 },
-    Reading: { focus: 1, recovery: 1 },
-    Meditation: { recovery: 2, discipline: 1 },
-  }
-
-  const tierMultipliers = [
-    { max: 20, multiplier: 1 },
-    { max: 50, multiplier: 2 },
-    { max: 100, multiplier: 3 },
-    { max: 200, multiplier: 4 },
-    { max: Infinity, multiplier: 5 },
-  ]
-
-  let multiplier = 1
-  for (let i = 0; i < tierMultipliers.length; i++) {
-    if (targetValue <= tierMultipliers[i].max) {
-      multiplier = tierMultipliers[i].multiplier
-      break
-    }
-  }
-
-  const baseRewards = rewardByType[type] || {}
-  const statRewards = Object.fromEntries(
-    Object.entries(baseRewards).map(([key, value]) => [key, value * multiplier])
+  createdDeadline.setMinutes(
+    createdDeadline.getMinutes() - settings.timeReduction
   )
 
-  return { exp, coins, stats: statRewards }
+  console.log("Diff", difficulty, settings.xp)
+  console.log("New data:", createdDeadline, difficulty)
+
+  return { createdDeadline, reward }
 }
