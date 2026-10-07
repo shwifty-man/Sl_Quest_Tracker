@@ -134,6 +134,15 @@ const authStyles = StyleSheet.create({
         fontSize: 12,
     },
 
+    passwordRule: {
+        flexDirection: 'row',
+        gap: 5
+    },
+
+    passwordRuleText: {
+        color: '#fff'
+    },
+
     eyeButton: {
         width: 42,
         height: "100%",
