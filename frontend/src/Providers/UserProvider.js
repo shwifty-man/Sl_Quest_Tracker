@@ -27,6 +27,7 @@ export function UserProvider({ children }) {
   const [weekly, setWeekly] = useState(null)
   const [progress, setProgress] = useState(null)
   const [coins, setCoins] = useState(null)
+  const [activeEffects, setActiveEffects] = useState([])
 
   const [inventory, setInventory] = useState(null)
   const [shop, setShop] = useState(null)
@@ -131,6 +132,69 @@ export function UserProvider({ children }) {
     [token],
   )
 
+  const getActiveEffects = useCallback(
+    async () => {
+      try {
+        if (!token) return
+
+        const res = await fetch(
+          `${process.env.EXPO_PUBLIC_BACKEND_URL}/users/inventory/effect`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        )
+
+        if (!res.ok) {
+          throw new Error(`Failed to get effect: ${res.status}`)
+        }
+
+        const data = await res.json()
+
+        const effects = data
+          .filter((effect) => {
+            return (
+              effect.effect_type === "xp_multiplier" ||
+              effect.effect_type === "coin_multiplier"
+            )
+          })
+          .map((effect) => {
+            let icon
+            let color
+            let title
+
+            if (effect.effect_type === "xp_multiplier") {
+              icon = "lightning-bolt"
+              color = "#35E0B2"
+              title = `EXP x${Number(effect.value)}`
+            }
+
+            if (effect.effect_type === "coin_multiplier") {
+              icon = "cash-multiple"
+              color = "#FFD32A"
+              title = `COINS x${Number(effect.value)}`
+            }
+
+            return {
+              id: effect.id,
+              icon,
+              color,
+              title,
+              expiresAt: effect.expires_at,
+            }
+          })
+
+        setActiveEffects(effects)
+      } catch (err) {
+        console.error("GET ACTIVE EFFECTS ERROR:", err)
+      }
+    },
+    [token],
+  )
+
   const getUserShop = useCallback(
     async () => {
       try {
@@ -218,26 +282,24 @@ export function UserProvider({ children }) {
         setHunterName,
 
         stats,
-
         streak,
         weekly,
-
         progress,
-
         loadingForProfile,
 
         coins,
-
         inventory,
         shop,
+        activeEffects,
+        setActiveEffects,
 
         setup,
-
         setSetup,
 
         getUserProfile,
         getUserInventory,
         getUserShop,
+        getActiveEffects
       }}
     >
       {children}
