@@ -588,46 +588,98 @@ export const questInfoStyles = StyleSheet.create({
 })
 
 export const rewardStyles = StyleSheet.create({
+
   overlay: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
+
+    backgroundColor: "#020817",
+
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
-    zIndex: 9999,
+
+    zIndex: 999,
+
+    paddingHorizontal: 24,
   },
-  card: {
-    width: "82%",
-    minHeight: "40%",
-    paddingVertical: 20,
-    paddingHorizontal: 22,
-    borderRadius: 14,
-    backgroundColor: "rgba(9, 35, 86, 0.95)",
-    borderWidth: 1,
-    borderColor: "#4CFF88",
-    shadowColor: "#000",
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
-  },
+
   title: {
-    color: "#4CFF88",
-    fontSize: 20,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  text: {
+    position: "absolute",
+    top: 90,
+
     color: "#FFFFFF",
-    fontSize: 18,
-    lineHeight: 24,
+
+    fontSize: 28,
+    fontWeight: "800",
+
+    letterSpacing: 3,
+
     textAlign: "center",
-    marginTop: 100,
+
+    textTransform: "uppercase",
   },
+
+  fadingBox: {
+    width: "100%",
+    maxWidth: 420,
+    height: '60%',
+
+    backgroundColor: "#081426",
+
+    borderWidth: 1,
+    borderColor: "#38E6A3",
+
+    borderRadius: 4,
+
+    overflow: "hidden",
+
+    shadowColor: "#38E6A3",
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.45,
+    shadowRadius: 18,
+
+    elevation: 12,
+    borderRadius: 24,
+    paddingBottom: 20
+  },
+
+  rewardLabel: {
+    color: "#38E6A3",
+
+    fontSize: 18,
+    fontWeight: "700",
+
+    letterSpacing: 4,
+
+    textAlign: "center",
+
+    marginBottom: 20,
+  },
+
+  text: {
+    color: "white",
+
+    fontSize: 32,
+    fontWeight: "800",
+
+    letterSpacing: 2,
+
+    textAlign: "center",
+
+    textShadowColor: "#38E6A3",
+    textShadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    textShadowRadius: 12,
+  },
+
 })
 
 export const user = StyleSheet.create({
