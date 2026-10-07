@@ -1,9 +1,6 @@
-// REQUIRED FOR OVERLAY: Foreground service that creates and manages the overlay view displayed on top of blocked apps
+// REQUIRED FOR OVERLAY: Service that creates and manages the overlay view displayed on top of blocked apps
 package com.devtim08.System;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.PixelFormat;
@@ -11,6 +8,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
@@ -20,8 +18,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-
-import androidx.core.app.NotificationCompat;
 
 public class OverlayService extends Service {
 
@@ -36,8 +32,9 @@ public class OverlayService extends Service {
 
     @Override
     public void onCreate() {
+        // Not a foreground service: AppWatcherService already keeps the process in the
+        // foreground, and starting an FGS from the background crashes on Android 12+.
         super.onCreate();
-        startForeground(1, createNotification());
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         countdownHandler = new Handler(Looper.getMainLooper());
     }
@@ -48,7 +45,14 @@ public class OverlayService extends Service {
 
         if ("HIDE_OVERLAY".equals(action)) {
             hideOverlayView();
-            return START_STICKY;
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+
+        if (!Settings.canDrawOverlays(this)) {
+            android.util.Log.w(TAG, "Overlay permission missing; not showing overlay");
+            stopSelf();
+            return START_NOT_STICKY;
         }
 
         if (intent != null) {
@@ -67,7 +71,8 @@ public class OverlayService extends Service {
             updatePenaltyTimeText();
         }
 
-        return START_STICKY;
+        // Don't let the system recreate the overlay from a null intent after a kill.
+        return START_NOT_STICKY;
     }
 
     private void showOverlayView() {
@@ -81,7 +86,7 @@ public class OverlayService extends Service {
                     ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
                     : WindowManager.LayoutParams.TYPE_PHONE;
 
-            // Layout params - overlay displays on top but doesn't block system input
+            // Layout params - full-screen overlay that swallows touches to the app underneath
             WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                     WindowManager.LayoutParams.MATCH_PARENT,
                     WindowManager.LayoutParams.MATCH_PARENT,
@@ -99,6 +104,9 @@ public class OverlayService extends Service {
             startCountdownUpdates();
         } catch (Exception e) {
             android.util.Log.e(TAG, "Failed to display overlay", e);
+            overlayView = null;
+            penaltyTimeText = null;
+            stopSelf();
         }
     }
 
@@ -118,8 +126,8 @@ public class OverlayService extends Service {
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         hideOverlayView();
+        super.onDestroy();
     }
 
     private void startCountdownUpdates() {
@@ -192,23 +200,6 @@ public class OverlayService extends Service {
             android.util.Log.e(TAG, "Failed to parse penalty expiration timestamp", e);
             return 0L;
         }
-    }
-
-    private Notification createNotification() {
-        String channelId = "overlay_channel";
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    channelId, "Overlay Service",
-                    NotificationManager.IMPORTANCE_LOW);
-            getSystemService(NotificationManager.class).createNotificationChannel(channel);
-        }
-
-        return new NotificationCompat.Builder(this, channelId)
-                .setContentTitle("Penalty Active")
-                .setContentText("Blocking apps")
-                .setSmallIcon(android.R.drawable.ic_dialog_alert)
-                .build();
     }
 
     @Override

@@ -8,7 +8,6 @@ import android.provider.Settings;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -81,12 +80,7 @@ public class OverlayModule extends ReactContextBaseJavaModule {
             Intent intent = new Intent(context, OverlayService.class);
             intent.setAction("SHOW_OVERLAY");
 
-            try {
-                ContextCompat.startForegroundService(context, intent);
-            } catch (Exception e) {
-                Log.w(TAG, "Foreground service start failed; falling back to startService", e);
-                context.startService(intent);
-            }
+            context.startService(intent);
         } catch (Exception e) {
             Log.e(TAG, "Unable to show overlay", e);
         }
@@ -116,12 +110,7 @@ public class OverlayModule extends ReactContextBaseJavaModule {
                 intent.putExtra("ENDS_AT_ISO", endsAtIso);
             }
 
-            try {
-                ContextCompat.startForegroundService(context, intent);
-            } catch (Exception e) {
-                Log.w(TAG, "Foreground service start failed; falling back to startService", e);
-                context.startService(intent);
-            }
+            context.startService(intent);
         } catch (Exception e) {
             Log.e(TAG, "Unable to show overlay with expiry timestamp", e);
         }
@@ -149,12 +138,7 @@ public class OverlayModule extends ReactContextBaseJavaModule {
             intent.setAction("SHOW_OVERLAY");
             intent.putExtra("ENDS_AT_MILLIS", (long) endsAtMillis);
 
-            try {
-                ContextCompat.startForegroundService(context, intent);
-            } catch (Exception e) {
-                Log.w(TAG, "Foreground service start failed; falling back to startService", e);
-                context.startService(intent);
-            }
+            context.startService(intent);
         } catch (Exception e) {
             Log.e(TAG, "Unable to show overlay with expiry time", e);
         }

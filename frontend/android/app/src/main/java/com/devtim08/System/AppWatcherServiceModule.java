@@ -4,9 +4,14 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.util.Base64;
 import android.util.Log;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
@@ -32,7 +37,7 @@ public class AppWatcherServiceModule extends ReactContextBaseJavaModule {
     private final ReactApplicationContext reactContext;
     private static ReactApplicationContext staticReactContext;
     private static volatile boolean penaltyActive = false;
-    private static final Set<String> restrictedApps = new HashSet<>();
+    private static final Set<String> restrictedApps = java.util.Collections.synchronizedSet(new HashSet<>());
     private static volatile long penaltyEndsAtMillis = 0L;
     private static volatile String backendUrl = "";
     private static volatile String authToken = "";
@@ -155,27 +160,11 @@ public class AppWatcherServiceModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void setPenaltyActive(boolean active) {
-        penaltyActive = active;
-        Log.i(TAG, active ? "Penalty activated" : "Penalty cleared");
-
-        String currentApp = AppWatcherService.getCurrentForegroundApp();
-        boolean shouldBlock = active && isRestrictedApp(currentApp);
-        Intent intent = new Intent(reactContext, OverlayService.class);
-
-        if (shouldBlock) {
-            intent.setAction("SHOW_OVERLAY");
-            if (penaltyEndsAtMillis > 0L) {
-                intent.putExtra("ENDS_AT_MILLIS", penaltyEndsAtMillis);
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                reactContext.startForegroundService(intent);
-            } else {
-                reactContext.startService(intent);
-            }
-        } else {
-            intent.setAction("HIDE_OVERLAY");
-            reactContext.startService(intent);
+        if (penaltyActive != active) {
+            Log.i(TAG, active ? "Penalty activated" : "Penalty cleared");
         }
+        penaltyActive = active;
+        // AppWatcherService's 1s loop shows/hides the overlay based on this state.
     }
 
     @ReactMethod
@@ -279,6 +268,10 @@ public class AppWatcherServiceModule extends ReactContextBaseJavaModule {
                 app.putInt("categoryCode", categoryCode);
                 app.putString("category", categoryLabel);
                 app.putString("matchedBy", matchResult.matchedBy);
+                String icon = encodeIcon(resolveInfo.loadIcon(packageManager));
+                if (icon != null) {
+                    app.putString("icon", icon);
+                }
                 results.pushMap(app);
             }
 
@@ -286,6 +279,29 @@ public class AppWatcherServiceModule extends ReactContextBaseJavaModule {
         } catch (Exception e) {
             Log.e(TAG, "Failed to load entertainment apps", e);
             promise.reject("ENTERTAINMENT_APPS_ERROR", "Failed to load entertainment apps", e);
+        }
+    }
+
+    // Renders an app icon to a small PNG data URI that <Image source={{ uri }}> can display
+    private static final int ICON_SIZE_PX = 96;
+
+    private String encodeIcon(Drawable drawable) {
+        if (drawable == null) {
+            return null;
+        }
+        try {
+            Bitmap bitmap = Bitmap.createBitmap(ICON_SIZE_PX, ICON_SIZE_PX, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            drawable.setBounds(0, 0, ICON_SIZE_PX, ICON_SIZE_PX);
+            drawable.draw(canvas);
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+            bitmap.recycle();
+            return "data:image/png;base64," + Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to encode app icon", e);
+            return null;
         }
     }
 
@@ -375,6 +391,10 @@ public class AppWatcherServiceModule extends ReactContextBaseJavaModule {
     }
 
     public static boolean isPenaltyActive() {
+        long endsAt = penaltyEndsAtMillis;
+        if (endsAt > 0L && System.currentTimeMillis() >= endsAt) {
+            return false;
+        }
         return penaltyActive;
     }
 

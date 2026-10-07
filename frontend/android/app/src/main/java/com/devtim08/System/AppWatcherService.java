@@ -10,12 +10,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
+import android.provider.Settings;
 import android.util.Log;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -52,6 +54,10 @@ public class AppWatcherService extends Service {
                     try {
                         checkForegroundApp();
                         pollPenaltyIfNeeded();
+                    } catch (Exception e) {
+                        Log.w(TAG, "App watcher iteration failed", e);
+                    }
+                    try {
                         Thread.sleep(1000); // Check every 1 second
                     } catch (InterruptedException e) {
                         Log.i(TAG, "App watcher thread interrupted");
@@ -121,52 +127,45 @@ public class AppWatcherService extends Service {
             }
         }
 
-        if (eventForegroundApp != null) {
-            String newForegroundApp = eventForegroundApp;
+        if (eventForegroundApp != null && !eventForegroundApp.equals(currentForegroundApp)) {
+            currentForegroundApp = eventForegroundApp;
+            Log.i(TAG, "Foreground app changed: " + currentForegroundApp);
 
-            if (!newForegroundApp.equals(currentForegroundApp)) {
-                currentForegroundApp = newForegroundApp;
-                Log.i(TAG, "Foreground app changed: " + currentForegroundApp);
-
-                // If user just entered a restricted app, force-refresh penalty state now.
-                // This prevents waiting for the 15s poll window and missing first entry.
-                if (AppWatcherServiceModule.isRestrictedApp(currentForegroundApp)) {
-                    pollPenaltyNow();
-                }
-
-                com.facebook.react.bridge.ReactApplicationContext reactContext = AppWatcherServiceModule
-                        .getReactContext();
-                if (reactContext != null) {
-                    AppWatcherServiceModule.emitAppChangedEvent(reactContext, currentForegroundApp);
-                }
+            // If user just entered a restricted app, force-refresh penalty state now.
+            // This prevents waiting for the 15s poll window and missing first entry.
+            if (AppWatcherServiceModule.isRestrictedApp(currentForegroundApp)) {
+                pollPenaltyNow();
             }
 
-            // Native-side overlay enforcement (always evaluate)
-            boolean shouldBlock = AppWatcherServiceModule.isPenaltyActive()
-                    && AppWatcherServiceModule.isRestrictedApp(currentForegroundApp);
-            if (shouldBlock) {
-                if (!currentForegroundApp.equals(overlayShowingFor)) {
-                    Log.i(TAG, "Blocking restricted app: " + currentForegroundApp);
-                    Intent intent = new Intent(this, OverlayService.class);
-                    intent.setAction("SHOW_OVERLAY");
-                    long endsAtMillis = AppWatcherServiceModule.getPenaltyEndsAtMillis();
-                    if (endsAtMillis > 0L) {
-                        intent.putExtra("ENDS_AT_MILLIS", endsAtMillis);
-                    }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        startForegroundService(intent);
-                    } else {
-                        startService(intent);
-                    }
-                    overlayShowingFor = currentForegroundApp;
-                }
-            } else if (!overlayShowingFor.isEmpty()) {
-                Log.i(TAG, "Overlay cleared for app: " + currentForegroundApp);
+            com.facebook.react.bridge.ReactApplicationContext reactContext = AppWatcherServiceModule
+                    .getReactContext();
+            if (reactContext != null && reactContext.hasActiveReactInstance()) {
+                AppWatcherServiceModule.emitAppChangedEvent(reactContext, currentForegroundApp);
+            }
+        }
+
+        // Native-side overlay enforcement (always evaluate; this is the single owner of show/hide)
+        boolean shouldBlock = AppWatcherServiceModule.isPenaltyActive()
+                && AppWatcherServiceModule.isRestrictedApp(currentForegroundApp)
+                && Settings.canDrawOverlays(this);
+        if (shouldBlock) {
+            if (!currentForegroundApp.equals(overlayShowingFor)) {
+                Log.i(TAG, "Blocking restricted app: " + currentForegroundApp);
                 Intent intent = new Intent(this, OverlayService.class);
-                intent.setAction("HIDE_OVERLAY");
+                intent.setAction("SHOW_OVERLAY");
+                long endsAtMillis = AppWatcherServiceModule.getPenaltyEndsAtMillis();
+                if (endsAtMillis > 0L) {
+                    intent.putExtra("ENDS_AT_MILLIS", endsAtMillis);
+                }
+                // Plain (non-foreground) service: allowed because this service is already in
+                // the foreground, and avoids Android 12+ background FGS-start crashes.
                 startService(intent);
-                overlayShowingFor = "";
+                overlayShowingFor = currentForegroundApp;
             }
+        } else if (!overlayShowingFor.isEmpty()) {
+            Log.i(TAG, "Overlay cleared for app: " + currentForegroundApp);
+            stopService(new Intent(this, OverlayService.class));
+            overlayShowingFor = "";
         }
     }
 
@@ -214,10 +213,15 @@ public class AppWatcherService extends Service {
             }
             in.close();
 
-            JSONObject obj = new JSONObject(response.toString());
-            boolean active = obj.optBoolean("active", false);
-            String endsAtIso = obj.optString("ends_at", null);
-            long endsAtMillis = parseIsoToMillis(endsAtIso);
+            // Backend returns a plain JSON string (not an object) when no penalty is active
+            Object parsed = new JSONTokener(response.toString()).nextValue();
+            boolean active = false;
+            long endsAtMillis = 0L;
+            if (parsed instanceof JSONObject) {
+                JSONObject obj = (JSONObject) parsed;
+                active = obj.optBoolean("active", false);
+                endsAtMillis = parseIsoToMillis(obj.optString("ends_at", null));
+            }
 
             AppWatcherServiceModule.updatePenaltyState(active, endsAtMillis);
         } catch (Exception e) {
