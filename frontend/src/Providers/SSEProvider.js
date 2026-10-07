@@ -12,10 +12,6 @@ import { STORAGE_KEYS } from "../2_services/storage";
 
 export const SSEContext = createContext(null);
 
-export function useSSE() {
-    return useContext(SSEContext);
-}
-
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 export function SSEProvider({ children }) {
