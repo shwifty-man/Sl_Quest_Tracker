@@ -20,11 +20,13 @@ export default function Shop() {
     getUserShop,
     shop,
     progress,
+    getUserProfile
   } = useUser();
 
   useEffect(() => {
     const loadShop = async () => {
       await getUserShop();
+      await getUserProfile()
     };
 
     loadShop();
