@@ -1,34 +1,18 @@
-CREATE TABLE IF NOT EXISTS quest_rewards (
+DROP TABLE IF EXISTS quest_rewards CASCADE;
+
+CREATE TABLE quest_rewards (
     id SERIAL PRIMARY KEY,
 
     quest_id INTEGER NOT NULL
+        UNIQUE
         REFERENCES quests(id)
         ON DELETE CASCADE,
 
-    reward_type TEXT NOT NULL CHECK (
-        reward_type IN (
-            'exp',
-            'coins',
-            'stat',
-            'item',
-            'badge',
-            'effect'
-        )
-    ),
+    user_id INTEGER NOT NULL
+        REFERENCES users(id)
+        ON DELETE CASCADE,
 
-    amount INTEGER,
+    amount INTEGER NOT NULL,
 
-    stat_name TEXT CHECK (
-        stat_name IN (
-            'Discipline',
-            'Focus',
-            'Endurance',
-            'Strength',
-            'Recovery'
-        )
-    ),
-
-    item_id INTEGER REFERENCES items(id) ON DELETE SET NULL,
-    badge_id INTEGER REFERENCES badges(id) ON DELETE SET NULL,
-    effect_id INTEGER REFERENCES effects(id) ON DELETE SET NULL
+    granted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
