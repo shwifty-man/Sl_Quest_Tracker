@@ -1,0 +1,7 @@
+DROP TABLE IF EXISTS revoked_tokens CASCADE;
+
+CREATE TABLE revoked_tokens (
+    id SERIAL PRIMARY KEY,
+    token TEXT NOT NULL UNIQUE,
+    revoked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
