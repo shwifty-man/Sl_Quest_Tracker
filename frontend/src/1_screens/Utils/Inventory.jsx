@@ -12,10 +12,10 @@ export default function Inventory() {
 
   useEffect(() => {
     getUserInventory()
-  }, [])
+  }, [getUserInventory])
 
   return (
-    <View style={[styles.menuContainer, { flex: 0.8, paddingTop: 10, margin: 'auto' }]}>
+    <View style={[styles.menuContainer, { flex: 0.8, paddingTop: 10, margin: 'auto', minWidth: '100%', alignItems: 'center', }]}>
       <Text style={{ textAlign: 'center', color: "#DDE8FF", fontSize: 20, }}>Inventory</Text>
 
       <FlatList
@@ -27,6 +27,7 @@ export default function Inventory() {
         keyExtractor={(item, index) =>
           String(item?.id ?? item?._id ?? index)
         }
+
         renderItem={({ item }) => (
           <Card
             id={item?.item_id}
@@ -38,12 +39,13 @@ export default function Inventory() {
             quantity={item?.quantity}
           />
         )}
+
         ListEmptyComponent={
           <Text style={{ color: "white", textAlign: "center" }}>
             No items found.
           </Text>
         }
       />
-    </View>
+    </View >
   )
 }
