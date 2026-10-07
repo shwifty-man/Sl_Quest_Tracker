@@ -1,23 +1,48 @@
-// auth.middleware.js
 import morgan from "morgan"
-import jwt from 'jsonwebtoken'
-
+import jwt from "jsonwebtoken"
 
 import { verifyJWT } from "../services/1_auth.service.js"
+import pool from "../../DB/config/db.js"
 
-export function authenticate(req, res, next) {
-  // read Authorization header, verify JWT via auth.service.verifyJWT,
-  const token = req.headers.authorization?.split(" ")[1] || req.query.token
-  if (!token) return res.status(401).send("Access denied. No token provided.")
+
+export async function authenticate(req, res, next) {
+
+  const token =
+    req.headers.authorization?.split(" ")[1] ||
+    req.query.token
+
+  if (!token || token === "null" || token === "undefined") {
+    return res.status(401).send("Access denied. No valid token provided.")
+  }
 
   try {
-    // attach userId (or user object) to req, call next() or respond 401
+
+    // Check whether token has been logged out
+    const revoked = await pool.query(
+      "SELECT id FROM revoked_tokens WHERE token = $1",
+      [token]
+    )
+
+    if (revoked.rows.length > 0) {
+      return res
+        .status(401)
+        .send("Token has been revoked.")
+    }
+
+    // Verify JWT
     const decoded = verifyJWT(token)
+
     req.user = decoded
+
     next()
+
   } catch (err) {
-    console.warn("Authentication failed: invalid token")
-    res.status(401).send("invalid Token")
+
+    console.warn("Authentication failed:", err)
+
+    return res
+      .status(401)
+      .send("Invalid token")
   }
 }
 

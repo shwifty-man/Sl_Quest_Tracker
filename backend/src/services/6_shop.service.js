@@ -1,4 +1,4 @@
-import pool from "../../DB/0_config/db.js"
+import pool from "../../DB/config/db.js"
 
 export async function getShopItems() {
   try {

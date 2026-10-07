@@ -1,4 +1,4 @@
-import pool from "../../DB/0_config/db.js"
+import pool from "../../DB/config/db.js"
 
 export async function changeHunterName(name, userId) {
   try {
@@ -17,6 +17,15 @@ export async function changeHunterName(name, userId) {
   }
 }
 
+export async function changeSetup(userId) {
+  try {
+    const results = await pool.query(`UPDATE users SET setup_complete = TRUE WHERE id = $1 RETURNING setup_complete;`, [userId])
+    return results.rows[0]
+  } catch (err) {
+    throw err
+  }
+}
+
 export async function getHunterName(userId) {
   try {
     const sql = `SELECT username FROM users WHERE id = $1;`
@@ -29,9 +38,46 @@ export async function getHunterName(userId) {
 
 export async function getUserStats(userId) {
   try {
-    const sql = `SELECT discipline, focus, endurance, strength, recovery FROM user_stats WHERE user_id = $1;`
+    const sql = `SELECT * FROM user_stats WHERE user_id = $1;`
     const result = await pool.query(sql, [userId])
-    return result.rows[0]
+
+    const sqlStreak = `SELECT id, user_id, 
+    CASE
+      WHEN last_completed_at::date >= CURRENT_DATE - 1
+        THEN current_streak
+      ELSE 0
+    END AS current_streak, longest_streak, last_completed_at
+  FROM streaks
+  WHERE user_id = $1;`
+    const resultStreak = await pool.query(sqlStreak, [userId])
+
+    const sqlWeekly = `SELECT TO_CHAR(days.day, 'Dy') AS day, COUNT(quests.id) AS completed
+    FROM generate_series(
+      date_trunc('week', CURRENT_DATE),
+      date_trunc('week', CURRENT_DATE) + INTERVAL '6 days',
+      INTERVAL '1 day'
+    ) AS days(day)
+    LEFT JOIN quests
+      ON DATE(quests.completed_at) = days.day
+      AND quests.user_id = $1
+      AND quests.is_completed = TRUE
+    GROUP BY days.day
+    ORDER BY days.day;`
+
+    const resultWeekly = await pool.query(sqlWeekly, [userId])
+
+    const streak = resultStreak.rows[0]
+    const weekly = resultWeekly.rows
+
+    console.log("Streak!: ", streak)
+    console.log("Weekly!: ", weekly)
+
+    return {
+      stats: result.rows[0],
+      streak,
+      weekly
+
+    }
   } catch (err) {
     throw err
   }
@@ -39,8 +85,8 @@ export async function getUserStats(userId) {
 
 export async function updateUserStats(userId, stats) {
   try {
-    const sql = `UPDATE user_stats SET discipline = $1, focus = $2, endurance = $3, strength = $4, recovery = $5 WHERE user_id = $6 RETURNING discipline, focus, endurance, strength, recovery;`
-    const result = await pool.query(sql, [stats.discipline, stats.focus, stats.endurance, stats.strength, stats.recovery, userId])
+    const sql = `UPDATE user_stats SET focus = $1 WHERE user_id = $2 RETURNING focus;`
+    const result = await pool.query(sql, [stats.focus, userId])
     return result.rows[0]
   } catch (err) {
     throw err
@@ -49,7 +95,7 @@ export async function updateUserStats(userId, stats) {
 
 export async function getUserProgress(userId) {
   try {
-    const sql = `SELECT level, exp, coins FROM progress WHERE user_id = $1;`
+    const sql = `SELECT * FROM progress WHERE user_id = $1;`
     const result = await pool.query(sql, [userId])
     return result.rows[0]
   } catch (err) {
@@ -85,7 +131,7 @@ export async function useInventoryItem(userId, itemId) {
   try {
     await client.query("BEGIN")
 
-        const inventorySql = `
+    const inventorySql = `
       SELECT ui.quantity,
              i.id AS item_id,
             i.type,
@@ -153,11 +199,34 @@ export async function useInventoryItem(userId, itemId) {
         : null
 
       const insertEffectSql = `
-        INSERT INTO user_effects (user_id, effect_id, source_item_id, expires_at)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO user_effects (
+            user_id,
+            effect_id,
+            source_item_id,
+            expires_at
+        )
+        SELECT $1, $2, $3, $4
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM user_effects ue
+            JOIN effects e ON e.id = ue.effect_id
+            WHERE ue.user_id = $1
+              AND e.effect_type = (
+                  SELECT effect_type
+                  FROM effects
+                  WHERE id = $2
+              )
+              AND (ue.expires_at IS NULL OR ue.expires_at > now())
+        )
         RETURNING id, effect_id, expires_at;
-      `
+    `;
+
       const effectResult = await client.query(insertEffectSql, [userId, row.effect_id, itemId, expiresAt])
+
+      if (effectResult.rows.length === 0) {
+        throw new Error(`A ${row.effect_type} effect is already active`)
+      }
+
       appliedEffect = {
         ...effectResult.rows[0],
         effect_type: row.effect_type,
@@ -185,4 +254,38 @@ export async function useInventoryItem(userId, itemId) {
   } finally {
     client.release()
   }
+}
+
+export async function getActiveEffects(userId) {
+
+  const client = await pool.connect()
+
+  try {
+
+    const sql = `
+      SELECT
+        ue.id,
+        ue.effect_id,
+        ue.source_item_id,
+        ue.expires_at,
+        e.effect_type,
+        e.value,
+        e.duration_seconds
+      FROM user_effects ue
+      JOIN effects e ON e.id = ue.effect_id
+      WHERE ue.user_id = $1
+        AND (ue.expires_at IS NULL OR ue.expires_at > now())
+      ORDER BY ue.expires_at ASC NULLS LAST;
+    `
+
+    const result = await client.query(sql, [userId])
+
+    return result.rows
+
+  } finally {
+
+    client.release()
+
+  }
+
 }

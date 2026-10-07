@@ -26,7 +26,8 @@
     "njwt": "^2.0.1",
     "node-cron": "^4.2.1",
     "node-pg-migrate": "^8.0.4",
-    "pg": "^8.16.3"
+    "pg": "^8.23.0",
+    "pg-boss": "^10.4.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

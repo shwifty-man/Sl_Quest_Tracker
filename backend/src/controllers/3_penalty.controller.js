@@ -11,7 +11,7 @@ export async function getAllPenaltiesController(req, res) {
     res.status(200).json(getPenalty)
   } catch (err) {
     console.error("getAllPenaltiesController error:", err)
-    res.status(500).json({err: err.message})
+    res.status(500).json({ err: err.message })
   }
 }
 

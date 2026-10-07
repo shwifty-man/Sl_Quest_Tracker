@@ -1,10 +1,11 @@
-import pool from "../../DB/0_config/db.js";
+import pool from "../../DB/config/db.js";
 
 
 // Gets active penalty for the overlay
 export async function getAllActivePenalties(userId) {
   try {
-    const sql = `SELECT active, quest_id, restricted_apps, ends_at FROM penalties WHERE user_id = $1 AND active = true;`
+    const sql = `SELECT active, ends_at FROM penalties WHERE user_id = $1 AND active = true AND (ends_at IS NULL OR ends_at > now())
+    ORDER BY ends_at DESC LIMIT 1;`
     const results = await pool.query(sql, [userId])
     return results.rows[0]
   } catch (err) {

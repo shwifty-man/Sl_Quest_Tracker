@@ -9,6 +9,8 @@ import {
   updateUserStatsController,
   getUserInventoryController,
   useInventoryItemController,
+  updateSetupController,
+  getActiveEffectsController
 } from "../controllers/4_user.controller.js"
 
 const router = express.Router()
@@ -19,6 +21,9 @@ router.get("/profile", authenticate, getUserProfileController)
 // PATCH update username
 router.post("/name", authenticate, ...hunterNameValidation, validate, updateUsernameController)
 
+// PATCH update username
+router.put("/setup", authenticate, updateSetupController)
+
 // PATCH update user stats
 router.patch("/stats", authenticate, updateUserStatsController)
 
@@ -28,5 +33,7 @@ router.get("/inventory", authenticate, getUserInventoryController)
 // POST use inventory item
 router.post("/inventory/use", authenticate, useInventoryItemController)
 
+// POST use inventory item
+router.get("/inventory/effect", authenticate, getActiveEffectsController)
 
 export default router

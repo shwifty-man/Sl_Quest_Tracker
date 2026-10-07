@@ -2,7 +2,7 @@ import dotenv from "dotenv"
 import fs from "fs"
 import path from "path"
 import { fileURLToPath } from "url"
-import pool from "./0_config/db.js"
+import pool from "./config/db.js"
 
 dotenv.config()
 

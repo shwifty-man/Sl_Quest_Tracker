@@ -10,19 +10,12 @@ export async function getShopItemsController(req, res) {
   }
 }
 
-// export async function getShopItemController(req, res) {
-//   try {
-//     res.status(501).json({ error: "Not implemented" })
-//   } catch (err) {
-//     console.error("getShopItemController error:", err)
-//     res.status(500).json({ error: err.message || "Internal Server Error" })
-//   }
-// }
-
 export async function buyItemController(req, res) {
   try {
     const userId = req.user.id
     const { itemId } = req.body
+
+    console.log("shop buy itemId: ", itemId)
 
     if (!itemId) {
       return res.status(400).json({ error: "itemId is required" })

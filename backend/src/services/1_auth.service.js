@@ -1,7 +1,7 @@
 // auth.service.js
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-import pool from "../../DB/0_config/db.js"
+import pool from "../../DB/config/db.js"
 
 async function hashPassword(plainPassword) {
   // hash the password using bcrypt and return the hash
@@ -73,18 +73,19 @@ export function verifyJWT(token) {
   }
 }
 
-export async function createUser(email, password) {
+export async function createUser(name, email, password) {
   // insert a new user in the DB and return the created user record
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
     const passwordHash = await hashPassword(password)
-    const sql = `INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email;`
-    const result = await client.query(sql, [email, passwordHash])
+    const sql = `INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *;`
+    const result = await client.query(sql, [name, email, passwordHash])
     const user = result.rows[0]
-    await client.query(`INSERT INTO progress (user_id, level, exp, coins) VALUES ($1, 1, 0, 0)`,[user.id]);
-    await client.query(`INSERT INTO user_stats (user_id, discipline, focus, endurance, strength, recovery) VALUES ($1, 1, 1, 1, 1, 1);`, [user.id])
+    await client.query(`INSERT INTO progress (user_id, level, exp, exp_to_next_level, coins) VALUES ($1, 1, 0, 100, 0)`, [user.id]);
+    await client.query(`INSERT INTO user_stats (user_id, focus) VALUES ($1, 1);`, [user.id])
+    await client.query('INSERT INTO streaks (user_id) VALUES ($1);', [user.id])
 
     const defaultBadgeResult = await client.query(`SELECT id FROM badges ORDER BY id LIMIT 1;`)
     if (defaultBadgeResult.rows.length > 0) {
@@ -100,9 +101,9 @@ export async function createUser(email, password) {
     return user
   } catch (err) {
     await client.query("ROLLBACK");
-      if (err.code === '23505') {
-    throw new Error('Email already exists');
-  }
+    if (err.code === '23505') {
+      throw new Error('Email already exists');
+    }
     throw err
   }
 }
@@ -146,6 +147,7 @@ export async function loginUser(email, password) {
       user: {
         id: user.id,
         email: user.email,
+        set_up: user.setup_complete
       },
     }
   } catch (err) {
@@ -153,10 +155,10 @@ export async function loginUser(email, password) {
   }
 }
 
-export async function registerUser(email, password) {
+export async function registerUser(name, email, password) {
   // orchestrate registration: check duplicate, hash pw, create user, return token + user
   try {
-    const user = await createUser(email, password)
+    const user = await createUser(name, email, password)
 
     const token = generateJWT(user)
 
@@ -165,6 +167,7 @@ export async function registerUser(email, password) {
       user: {
         id: user.id,
         email: user.email,
+        set_up: user.setup_complete
       },
     }
   } catch (err) {
