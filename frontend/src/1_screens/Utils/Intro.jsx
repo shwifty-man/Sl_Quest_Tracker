@@ -63,14 +63,7 @@ const Intro = ({ navigation }) => {
         const success = await setSetup(token)
 
         if (success) {
-            try {
-                navigation.reset({
-                    index: 0,
-                    routes: [{ name: "Home" }],
-                })
-            } catch (err) {
-                console.log("Intro navigation fallback: ", err)
-            }
+            console.log("Setup finished")
         }
     }
 
