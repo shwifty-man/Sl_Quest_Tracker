@@ -41,6 +41,13 @@ export const styles = StyleSheet.create({
         letterSpacing: 2,
     },
 
+    subHeaderTitle: {
+        color: "#7FAEFF",
+        fontSize: 18,
+        fontWeight: "500",
+        letterSpacing: 1,
+    },
+
     diamond: {
         width: 9,
         height: 9,
