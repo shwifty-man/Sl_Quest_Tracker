@@ -22,7 +22,7 @@ router.get("/:id", authenticate, getQuestsByIdController)
 router.post("/", authenticate, ...createQuestValidation, validate, createQuestController)
 
 // POST an update
-router.post("/:id/update", authenticate, updateProgressController)
+router.put("/:id/update", authenticate, updateProgressController)
 
 
 export default router

@@ -7,11 +7,25 @@ import {
 
 export async function getQuestsController(req, res) {
   try {
-    const userId = req.user.id
-    const getQuests = await getUserQuests(userId)
-    res.status(200).json(getQuests)
+    console.log("GET QUESTS CONTROLLER HIT");
+
+    const userId = req.user.id;
+    console.log("USER ID:", userId);
+
+    const getQuests = await getUserQuests(userId);
+
+    console.log("GET QUESTS RESULT:", getQuests);
+
+    return res.status(200).json(getQuests);
+
   } catch (err) {
-    res.status(400).json(err.message)
+    console.error("GET QUESTS ERROR:", err);
+    console.error("MESSAGE:", err.message);
+    console.error("STACK:", err.stack);
+
+    return res.status(500).json({
+      message: err.message
+    });
   }
 }
 
@@ -33,16 +47,18 @@ export async function createQuestController(req, res) {
     if (!questData) {
       return res.status(400).json({ message: "No quest data provided" });
     }
-    const { questTitle, type, unitName, targetValue } = questData;
+    const { questTitle, time, deadline, type, questDescription, difficulty } = questData;
 
-    const newQuest = await createQuest(userId, { questTitle, type, unitName, targetValue })
+    console.log("controller to create quest: ", questTitle, time, deadline, type, questDescription, difficulty)
+
+    const newQuest = await createQuest(userId, { questTitle, time, type, deadline, questDescription, difficulty })
 
     res.status(201).json(newQuest)
   } catch (err) {
     console.error("createQuestController error:", err)
     res.status(500).json({
-    message: err.message,
-  });
+      message: err.message,
+    });
 
   }
 }
@@ -51,8 +67,17 @@ export async function updateProgressController(req, res) {
   try {
     const userId = req.user.id
     const questId = req.params.id
-    const {currentValue} = req.body
-    const newProgress = await updateProgress(userId, questId, currentValue)
+
+    const newProgress = await updateProgress(userId, questId)
+    console.log("newProgress", newProgress)
+
+    if (!newProgress) {
+      return res.status(400).json({
+        success: false,
+        message: "Quest could not be completed."
+      });
+    }
+    console.log("newProgress", newProgress)
     res.status(200).json(newProgress)
   } catch (err) {
     console.error("updateProgressController error:", err)

@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS streaks CASCADE;
+
+CREATE TABLE streaks (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    current_streak INTEGER NOT NULL DEFAULT 0,
+    longest_streak INTEGER NOT NULL DEFAULT 0,
+    last_completed_at TIMESTAMP WITH TIME ZONE
+);

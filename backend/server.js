@@ -1,5 +1,5 @@
 import express from "express"
-import pool from "./DB/0_config/db.js"
+import pool from "./DB/config/db.js"
 import path from "path"
 import { fileURLToPath } from "url"
 
@@ -12,10 +12,13 @@ import badgesRoutes from "./src/routes/5_badges.routes.js"
 import shopRoutes from "./src/routes/6_shop.routes.js"
 
 // Middleware/services:
-import { startCronJob } from "./src/jobs/deadline.job.js"
+import { startDeadlineWorker } from "./src/jobs/deadline.job.js"
+import { startRewardWorker } from "./src/jobs/reward.job.js"
 import { authenticate } from "./src/middleware/auth.middleware.js"
 import { addSseClient } from "./src/services/sse.service.js"
 import { getServerLoggerMiddleware } from "./src/middleware/auth.middleware.js"
+
+import { myEmitter, boss } from "./src/services/eventEmitter.js";
 
 const PORT = process.env.PORT || 4000
 
@@ -27,6 +30,21 @@ const __dirname = path.dirname(__filename)
 
 
 async function startServer() {
+
+  boss.on('error', error => console.error(error));
+
+  await boss.start();
+
+  await boss.createQueue("quest-deadline");
+  await boss.createQueue("quest-completed");
+
+  console.log('pg-boss has started successfully');
+
+  startDeadlineWorker()
+  console.log('startDeadlineWorker started successfully');
+  startRewardWorker()
+  console.log('startRewardWorker started successfully');
+
   app.use(express.json())
   app.use(getServerLoggerMiddleware())
 
@@ -49,6 +67,9 @@ async function startServer() {
   app.use("/shop", shopRoutes)
   // SSE endpoint
   app.get("/events", authenticate, (req, res) => {
+    console.log("SSE CONNECTED:", req.user?.id);
+
+
     res.setHeader("Content-Type", "text/event-stream")
     res.setHeader("Cache-Control", "no-cache")
     res.setHeader("Connection", "keep-alive")
@@ -56,6 +77,7 @@ async function startServer() {
     res.write("event: connected\ndata: {}\n\n")
     addSseClient(res)
   })
+
 
   app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`)
@@ -70,4 +92,3 @@ async function startServer() {
   })
 }
 startServer()
-startCronJob()

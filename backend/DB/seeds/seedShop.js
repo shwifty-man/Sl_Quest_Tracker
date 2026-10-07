@@ -1,7 +1,7 @@
-import dotenv from "dotenv"
-import pool from "./0_config/db.js"
+import dotenv from "dotenv";
+import pool from "../config/db.js";
 
-dotenv.config()
+dotenv.config();
 
 const effects = [
   {
