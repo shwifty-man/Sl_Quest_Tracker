@@ -93,7 +93,7 @@ function RootNavigator() {
    * - User profile has finished loading
    * - Fonts have loaded
    */
-  if (isLoading || setup === undefined || !fontsLoaded) {
+  if (isLoading || !fontsLoaded) {
     return null
   }
 
