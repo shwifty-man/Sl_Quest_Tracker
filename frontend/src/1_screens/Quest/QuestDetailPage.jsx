@@ -16,7 +16,6 @@ import { fetchQuestById, fetchUpdateProgress } from "../../4_api/quests.api"
 
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { STORAGE_KEYS } from "../../2_services/storage"
-import { parseDeadline } from "../../2_services/helperFuncs.js"
 
 
 export default function QuestDetailPage({ route, navigation }) {
