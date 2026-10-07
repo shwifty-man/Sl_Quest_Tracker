@@ -12,7 +12,7 @@ import {
   fetchUpdateProgress,
 } from "../4_api/quests.api.js"
 
-import { useSSE } from "../2_services/context"
+import { SSEContext } from "./SSEProvider"
 
 import { AuthContext } from "./AuthProvider"
 import { ErrorContext } from "./ErrorProvider"
@@ -24,11 +24,13 @@ export function QuestProvider({ children }) {
   const [quests, setQuests] = useState([])
   const [loadingForQuests, setLoadingForQuests] = useState(false)
   const [penaltyStatus, setPenaltyStatus] = useState(null)
+
   const [reward, setReward] = useState(null)
+  const [showReward, setShowReward] = useState(false)
 
   const { token } = useContext(AuthContext)
   const { setError } = useContext(ErrorContext)
-  const { es } = useSSE();
+  const { es } = useContext(SSEContext)
 
   useEffect(() => {
 
@@ -191,7 +193,7 @@ export function QuestProvider({ children }) {
         const result = await fetchUpdateProgress(effectiveToken, questId)
 
         await getUserQuests(effectiveToken)
-
+        setShowReward(true)
         return result
 
       } catch (err) {
@@ -317,6 +319,8 @@ export function QuestProvider({ children }) {
         setPenaltyStatus,
         loadingForQuests,
         reward,
+        showReward,
+        setShowReward,
 
         getUserQuests,
         getQuestByFilter,
