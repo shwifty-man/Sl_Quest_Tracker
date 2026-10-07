@@ -5,6 +5,7 @@ export const STORAGE_KEYS = {
   USER: "User",
   QUESTS: "quests_cache",
   HUNTER_NAME_PREFIX: "hunter_name_",
+  BLOCKED_APPS: "blocked_apps",
 }
 
 export async function setCachedQuests(quests) {
