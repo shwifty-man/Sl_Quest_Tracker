@@ -99,11 +99,9 @@ export function UserProvider({ children }) {
         const newSetup =
           typeof results === "boolean"
             ? results
-            : Boolean(results?.setup_complete ?? results?.set_up)
+            : Boolean(results?.setup ?? results?.setup_complete ?? results?.set_up)
 
         setSetupState(newSetup)
-
-        console.log("SETUP STATE UPDATED:", newSetup)
 
         return newSetup
 
