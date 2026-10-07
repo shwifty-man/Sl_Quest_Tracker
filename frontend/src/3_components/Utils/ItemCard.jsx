@@ -10,7 +10,7 @@ const Card = ({ id, title, description, price, icon, isItem = false, quantity })
     const navigation = useNavigation()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [itemQuantity, setItemQuantity] = useState(quantity)
-    const { progress, getUserInventory } = useUser();
+    const { progress, getUserInventory, getActiveEffects } = useUser();
 
     const { token } = useAuth();
 
@@ -54,14 +54,12 @@ const Card = ({ id, title, description, price, icon, isItem = false, quantity })
 
             setItemQuantity(remainingQuantity)
 
-            console.log(`Effect data: ${appliedEffect}, ${remainingQuantity}`)
             await getUserInventory()
+            await getActiveEffects()
         } finally {
             setIsSubmitting(false)
         }
     }
-
-    //
 
     return (
         <View style={isItem ? { flexDirection: 'row', width: '100%', alignItems: "center", paddingHorizontal: 10 } : null}>
