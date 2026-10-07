@@ -4,12 +4,13 @@ dotenv.config()
 import fs from "fs"
 import path from "path"
 import { fileURLToPath } from "url"
-import pool from "./0_config/db.js"
+import pool from "./config/db.js"
 
 const migrations = [
   "Users/users.sql",
   "Users/user_stats.sql",
   "Users/progress.sql",
+  "Users/revoked_tokens.sql",
   "Store/Badges.sql",
   "Store/effects.sql",
   "Store/items.sql",
@@ -20,12 +21,13 @@ const migrations = [
   "Users/user_inventory_defaults.sql",
   "Quests/quests.sql",
   "Rewards/stat_rewards.sql",
+  "Rewards/streaks.sql",
   "Penalties/penalties.sql",
 ]
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-const tablesDir = path.join(__dirname, "1_tables")
+const tablesDir = path.join(__dirname, "tables")
 
 async function runMigrations() {
   try {
