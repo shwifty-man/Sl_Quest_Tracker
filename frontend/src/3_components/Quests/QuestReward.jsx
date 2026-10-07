@@ -4,11 +4,11 @@ import { rewardStyles } from "../../2_services/styles"
 import { useQuests } from "../../2_services/context"
 import { useNavigation } from "@react-navigation/native"
 
+import HeaderTitle from "../../3_components/Utils/headerTitle.jsx"
+import SmallLineDiamond from "../../3_components/Utils/SmallLineDiamond.jsx"
 
-import BackArrow from "../../3_components/Utils/BackArrow.jsx"
 
-
-function QuestReward() {
+function QuestReward({ onClose }) {
   const { reward } = useQuests()
 
   const navigation = useNavigation()
@@ -62,7 +62,7 @@ function QuestReward() {
         duration: 500,
         useNativeDriver: true,
       }).start(() => {
-        navigation.goBack();
+        onClose();
       });
 
       return;
@@ -77,14 +77,15 @@ function QuestReward() {
     }
 
     // Reset before showing the new reward
-    rewardOpacity.setValue(0);
-    rewardTranslateY.setValue(0);
+    rewardOpacity.setValue(1);
+    rewardTranslateY.setValue(80);
 
     Animated.sequence([
-      // Reward appears
-      Animated.timing(rewardOpacity, {
-        toValue: 1,
-        duration: 250,
+
+      // Reward comes up into the middle
+      Animated.timing(rewardTranslateY, {
+        toValue: 0,
+        duration: 500,
         useNativeDriver: true,
       }),
 
@@ -105,6 +106,7 @@ function QuestReward() {
           useNativeDriver: true,
         }),
       ]),
+
     ]).start(({ finished }) => {
       if (finished) {
         playReward(currentRewardIndex + 1);
@@ -132,8 +134,7 @@ function QuestReward() {
         },
       ]}
     >
-      <BackArrow navigation={navigation} />
-      <Text style={rewardStyles.title}>Reward: {reward?.reward?.reward.exp} XP</Text>
+
       <Animated.View
         style={[
           rewardStyles.fadingBox,
@@ -146,9 +147,14 @@ function QuestReward() {
           },
         ]}
       >
+        <View style={{ margin: 20, marginTop: 45 }}>
+          <HeaderTitle title="REWARD ACQUIRED" subHeader="YOUR EFFORTS PAY OFF" color="#38E6A3" />
+        </View>
         <Animated.View
           style={{
             flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
             transform: [
               {
                 scaleY: heightAnim,
@@ -166,19 +172,21 @@ function QuestReward() {
                 },
               ],
             }}
-          >  <Text style={rewardStyles.rewardLabel}>
-              REWARD ACQUIRED
-            </Text>
+          >
+
+
             {rewardEntries.length > 0 && (
               <Text style={rewardStyles.text}>
                 {rewardEntries[currentRewardIndex][0] === "exp"
-                  ? `+${rewardEntries[currentRewardIndex][1]} XP`
-                  : `+${rewardEntries[currentRewardIndex][1]} ${rewardEntries[currentRewardIndex][0]
-                  }`}
+                  ? `+${String(rewardEntries[currentRewardIndex][1])} XP`
+                  : `+${String(rewardEntries[currentRewardIndex][1])} ${String(
+                    rewardEntries[currentRewardIndex][0]
+                  )}`}
               </Text>
             )}
           </Animated.View>
         </Animated.View>
+        <SmallLineDiamond color="#38E6A3" />
       </Animated.View>
     </Animated.View>
   )
