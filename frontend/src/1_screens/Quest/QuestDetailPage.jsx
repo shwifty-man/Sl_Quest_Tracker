@@ -25,7 +25,7 @@ export default function QuestDetailPage({ route, navigation }) {
   const [quest, setQuest] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const { reward, getUserQuests, updateQuest } = useQuests()
+  const { reward, getUserQuests, updateQuest, showReward, setShowReward } = useQuests()
   const { setError } = useError()
 
   useEffect(() => {
@@ -85,8 +85,10 @@ export default function QuestDetailPage({ route, navigation }) {
 
     <View style={[styles.container, { padding: 20, paddingTop: 30 }]}>
 
-      {reward?.reward?.reward && reward?.questId === questId && (
-        <QuestReward />
+      {reward?.reward?.reward && reward?.questId === questId && showReward && (
+        <QuestReward
+          onClose={() => setShowReward(false)}
+        />
       )}
 
       {/* Header */}
