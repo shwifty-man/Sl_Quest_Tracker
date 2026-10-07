@@ -5,5 +5,6 @@ CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(50) UNIQUE,
   email VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
+  setup_complete BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
