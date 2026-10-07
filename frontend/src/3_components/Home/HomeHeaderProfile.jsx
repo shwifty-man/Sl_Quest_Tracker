@@ -1,12 +1,16 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useEffect, useState } from "react"
 import { Text, View, ImageBackground, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
+import { useAuth, useUser } from "../../2_services/context"
 import ProgressBar from "../../3_components/Quests/Progressbar.jsx";
-
+import ActiveEffect from "../../3_components/Utils/ActiveEffect.jsx";
 import backgroundImage from "../../../assets/image.png";
 
 function HomeHeaderProfile({ name, exp, level, requiredExp, showBackground = true }) {
+    const { token } = useAuth()
+    const { activeEffects, setActiveEffects, getActiveEffects } = useUser()
     const hour = new Date().getHours();
 
     let greeting;
@@ -22,6 +26,55 @@ function HomeHeaderProfile({ name, exp, level, requiredExp, showBackground = tru
     const currentExp = exp || 0;
     const currentLevel = level || 1;
     const totalRequiredExp = requiredExp || 1000;
+
+    useEffect(() => {
+        if (!token) return
+        getActiveEffects()
+    }, [token])
+
+    useEffect(() => {
+        if (activeEffects.length === 0) return
+
+        const updateTimers = () => {
+            const now = Date.now()
+
+            setActiveEffects((currentEffects) => {
+                return currentEffects
+                    .map((effect) => {
+                        const expiresAt = new Date(effect.expiresAt).getTime()
+
+                        const remainingSeconds = Math.max(
+                            0,
+                            Math.floor((expiresAt - now) / 1000),
+                        )
+
+                        const h = Math.floor(remainingSeconds / 3600)
+
+                        const m = Math.floor(
+                            (remainingSeconds % 3600) / 60
+                        )
+
+                        const s = remainingSeconds % 60
+
+                        return {
+                            ...effect,
+                            h,
+                            m,
+                            s,
+                        }
+                    })
+                    .filter((effect) => {
+                        return effect.h > 0 || effect.m > 0 || effect.s > 0
+                    })
+            })
+        }
+
+        updateTimers()
+
+        const interval = setInterval(updateTimers, 1000)
+
+        return () => clearInterval(interval)
+    }, [activeEffects.length])
 
     return (
         <ImageBackground
@@ -89,6 +142,21 @@ function HomeHeaderProfile({ name, exp, level, requiredExp, showBackground = tru
                     </View>
                 </View>
             </View>
+            <View style={styles.effectsContainer}>
+                {activeEffects ? activeEffects.map((effect) => {
+                    return (
+                        <ActiveEffect
+                            key={effect.id}
+                            icon={effect.icon}
+                            color={effect.color}
+                            title={effect.title}
+                            h={effect.h}
+                            m={effect.m}
+                            s={effect.s}
+                        />
+                    )
+                }) : null}
+            </View>
         </ImageBackground>
     );
 }
@@ -101,6 +169,7 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         margin: 0,
+        paddingBottom: 10
     },
 
     headerImage: {
@@ -181,6 +250,14 @@ const styles = StyleSheet.create({
         right: 0,
         bottom: 0,
         height: 70,
+    },
+
+    effectsContainer: {
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 8,
+        marginTop: 8,
     },
 });
 
