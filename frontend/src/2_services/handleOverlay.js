@@ -1,60 +1,15 @@
-// REQUIRED FOR OVERLAY: This file uses OverlayModule (native bridge) to show/hide overlay when penalties are active
-import {
-  NativeModules,
-  Platform,
-  NativeEventEmitter,
-  AppState,
-} from "react-native"
-import { getActivePenalty, isAnyPenaltyActive } from "./penaltyUtils"
+// REQUIRED FOR OVERLAY: Syncs penalty state and restricted apps to the native side.
+// AppWatcherService (native) is the single owner of showing/hiding the overlay;
+// this file only feeds it state and handles the overlay permission.
+import { NativeModules, Platform, AppState } from "react-native"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { getActivePenalty } from "./penaltyUtils"
+import { STORAGE_KEYS } from "./storage"
 
 const { AppWatcherServiceModule, OverlayModule } = NativeModules
 
-let blockedApps = []
-let eventListener = null
-let emitter = null
-let currentOverlayApp = null // Track which app currently has overlay displayed
-let currentPackageName = null
-let penaltyPollInterval = null
-
-const updateOverlayForPenalty = async (penaltyActive, endsAtMillis) => {
-  if (!OverlayModule) return
-  if (!currentPackageName) return
-
-  const isBlocked = blockedApps.includes(currentPackageName)
-
-  if (penaltyActive && isBlocked) {
-    if (currentOverlayApp !== currentPackageName) {
-      try {
-        const hasPermission = await OverlayModule.checkOverlayPermission()
-        if (!hasPermission) {
-          console.warn("[OVERLAY] Permission missing; opening system settings")
-          OverlayModule.requestOverlayPermission()
-          return
-        }
-        if (endsAtMillis > 0 && OverlayModule?.showOverlayWithEndsAtMillis) {
-          OverlayModule.showOverlayWithEndsAtMillis(endsAtMillis)
-        } else {
-          OverlayModule.showOverlay()
-        }
-        currentOverlayApp = currentPackageName
-      } catch (error) {
-        console.error("[OVERLAY] Failed to show overlay", error)
-      }
-    }
-    return
-  }
-
-  if (!penaltyActive || !isBlocked) {
-    if (currentOverlayApp !== null) {
-      try {
-        OverlayModule.hideOverlay()
-        currentOverlayApp = null
-      } catch (error) {
-        console.error("[OVERLAY] Failed to hide overlay", error)
-      }
-    }
-  }
-}
+export let blockedApps = [] // package names
+let appStateSubscription = null
 
 const parseEndsAtMillis = (penalty) => {
   const raw = penalty?.ends_at || penalty?.endsAt || penalty?.endsAtIso
@@ -63,36 +18,53 @@ const parseEndsAtMillis = (penalty) => {
   return Number.isNaN(millis) ? 0 : millis
 }
 
+// Push the current penalty to native. On a failed fetch, keep the last known
+// state instead of clearing it, so a network blip doesn't unblock apps.
 const syncPenaltyState = async () => {
+  if (!AppWatcherServiceModule) return
+
+  const penalty = await getActivePenalty()
+  if (penalty === null) return
+
+  // When no penalty is active the backend returns a plain string
+  const penaltyActive = penalty?.active === true
+  AppWatcherServiceModule.setPenaltyEndsAtMillis?.(
+    penaltyActive ? parseEndsAtMillis(penalty) : 0,
+  )
+  AppWatcherServiceModule.setPenaltyActive?.(penaltyActive)
+}
+
+export const getBlockedApps = () => blockedApps
+
+// Replace the restricted app list (package names) and push it to native
+const applyBlockedApps = (packages) => {
+  blockedApps = [
+    ...new Set(
+      (packages || []).filter((pkg) => typeof pkg === "string" && pkg.length > 0),
+    ),
+  ]
+  AppWatcherServiceModule?.setRestrictedApps?.(blockedApps)
+  console.info(`[OVERLAY] Restricted apps synced (${blockedApps.length})`)
+}
+
+// Save the user's chosen apps so they survive app restarts
+export const setBlockedApps = async (packages) => {
+  applyBlockedApps(packages)
   try {
-    const penalty = await getActivePenalty()
-    const penaltyActive = penalty?.active === true
-    const endsAtMillis = parseEndsAtMillis(penalty)
-    if (AppWatcherServiceModule?.setPenaltyEndsAtMillis) {
-      AppWatcherServiceModule.setPenaltyEndsAtMillis(endsAtMillis)
-    }
-    if (AppWatcherServiceModule?.setPenaltyActive) {
-      AppWatcherServiceModule.setPenaltyActive(!!penaltyActive)
-    }
-    return penaltyActive
+    await AsyncStorage.setItem(STORAGE_KEYS.BLOCKED_APPS, JSON.stringify(blockedApps))
   } catch (error) {
-    console.warn("[OVERLAY] Failed to sync penalty state:", error)
-    if (AppWatcherServiceModule?.setPenaltyActive) {
-      AppWatcherServiceModule.setPenaltyActive(false)
-    }
-    if (AppWatcherServiceModule?.setPenaltyEndsAtMillis) {
-      AppWatcherServiceModule.setPenaltyEndsAtMillis(0)
-    }
-    return false
+    console.warn("[OVERLAY] Failed to save blocked apps:", error)
   }
 }
 
-// Function to manually close overlay (called when user taps close button)
-export const closeOverlay = () => {
-  if (OverlayModule && currentOverlayApp !== null) {
-    console.info("[OVERLAY] Overlay dismissed by user")
-    OverlayModule.hideOverlay()
-    currentOverlayApp = null
+export const loadSavedBlockedApps = async () => {
+  try {
+    const saved = await AsyncStorage.getItem(STORAGE_KEYS.BLOCKED_APPS)
+    const parsed = saved ? JSON.parse(saved) : []
+    return Array.isArray(parsed) ? parsed : []
+  } catch (error) {
+    console.warn("[OVERLAY] Failed to load blocked apps:", error)
+    return []
   }
 }
 
@@ -125,161 +97,45 @@ export const requestOverlayPermission = () => {
   }
 }
 
-// Set up the native event listener
-const setupEventListener = () => {
-  if (!AppWatcherServiceModule) {
-    console.warn("[OVERLAY] App watcher module unavailable")
-    return
-  }
-
-  // Remove previous listener if it exists
-  if (eventListener) {
-    eventListener.remove()
-  }
-
-  emitter = new NativeEventEmitter(AppWatcherServiceModule)
-  eventListener = emitter.addListener("onAppChanged", ({ packageName }) => {
-    onAppChanged(packageName)
-  })
-}
-
-// Start the AppWatcher service and listener
+// Start the AppWatcher service and sync state to it. Safe to call repeatedly.
 export const startAppWatcherService = async () => {
+  if (Platform.OS !== "android") return
+
   if (!AppWatcherServiceModule) {
     console.warn("[OVERLAY] App watcher module unavailable")
     return
   }
 
-  if (Platform.OS === "android") {
-    AppWatcherServiceModule.startService()
+  AppWatcherServiceModule.startService()
 
-    if (AppWatcherServiceModule?.getEntertainmentApps) {
-      try {
-        const apps = await AppWatcherServiceModule.getEntertainmentApps()
-        const packages = (apps || [])
-          .map((app) => app?.packageName)
-          .filter((pkg) => typeof pkg === "string" && pkg.length > 0)
+  if (!(await checkOverlayPermission())) {
+    console.warn("[OVERLAY] Permission missing; opening system settings")
+    requestOverlayPermission()
+  }
 
-        if (packages.length > 0) {
-          blockedApps = [...new Set(packages)]
-          console.info(`[OVERLAY] Loaded ${blockedApps.length} restricted apps`)
-        }
-      } catch (error) {
-        console.warn("[OVERLAY] Failed to auto-load entertainment apps:", error)
-      }
+  // Prefer the user's saved selection; only auto-detect when nothing was ever chosen
+  if (blockedApps.length === 0) {
+    blockedApps = await loadSavedBlockedApps()
+  }
+  if (blockedApps.length === 0 && AppWatcherServiceModule.getEntertainmentApps) {
+    try {
+      const apps = await AppWatcherServiceModule.getEntertainmentApps()
+      applyBlockedApps((apps || []).map((app) => app?.packageName))
+    } catch (error) {
+      console.warn("[OVERLAY] Failed to auto-load entertainment apps:", error)
     }
+  } else {
+    applyBlockedApps(blockedApps)
+  }
 
-    if (AppWatcherServiceModule.setRestrictedApps) {
-      AppWatcherServiceModule.setRestrictedApps(blockedApps)
-      console.info(`[OVERLAY] Restricted apps synced (${blockedApps.length})`)
-    }
+  await syncPenaltyState()
 
-    await syncPenaltyState()
-
-    if (AppWatcherServiceModule?.getForegroundApp) {
-      try {
-        const pkg = await AppWatcherServiceModule.getForegroundApp()
-        if (pkg) {
-          currentPackageName = pkg
-          await onAppChanged(pkg)
-        }
-      } catch (error) {
-        console.warn("[OVERLAY] Failed to read foreground app:", error)
-      }
-    }
-
-    if (penaltyPollInterval) {
-      clearInterval(penaltyPollInterval)
-    }
-    penaltyPollInterval = setInterval(async () => {
-      const penalty = await getActivePenalty()
-      const penaltyActive = penalty?.active === true
-      const endsAtMillis = parseEndsAtMillis(penalty)
-      if (AppWatcherServiceModule?.getForegroundApp) {
-        try {
-          const pkg = await AppWatcherServiceModule.getForegroundApp()
-          if (pkg) currentPackageName = pkg
-        } catch (error) {
-          console.warn("[OVERLAY] Failed to read foreground app:", error)
-        }
-      }
-      await updateOverlayForPenalty(penaltyActive, endsAtMillis)
-      if (AppWatcherServiceModule?.setPenaltyActive) {
-        AppWatcherServiceModule.setPenaltyActive(!!penaltyActive)
-      }
-      if (AppWatcherServiceModule?.setPenaltyEndsAtMillis) {
-        AppWatcherServiceModule.setPenaltyEndsAtMillis(endsAtMillis)
-      }
-    }, 15000)
-
-    // Initial listener setup
-    setupEventListener()
-
-    // Re-establish listener when app state changes
-    const subscription = AppState.addEventListener("change", (nextState) => {
+  // Register once; re-sync whenever the app returns to the foreground
+  if (!appStateSubscription) {
+    appStateSubscription = AppState.addEventListener("change", (nextState) => {
       if (nextState === "active") {
-        setupEventListener()
         syncPenaltyState()
-      } else {
-        if (OverlayModule && currentOverlayApp !== null) {
-          console.info("[OVERLAY] Hiding overlay while app is backgrounded")
-          try {
-            OverlayModule.hideOverlay()
-            currentOverlayApp = null
-          } catch (error) {
-            console.error("[OVERLAY] Failed to hide overlay", error)
-          }
-        }
       }
     })
-
-    return () => {
-      subscription.remove()
-      if (eventListener) {
-        eventListener.remove()
-      }
-      if (penaltyPollInterval) {
-        clearInterval(penaltyPollInterval)
-        penaltyPollInterval = null
-      }
-    }
   }
-}
-
-// Handle app change events
-export const onAppChanged = async (packageName) => {
-  currentPackageName = packageName
-
-  if (!packageName) {
-    if (OverlayModule && currentOverlayApp !== null) {
-      try {
-        OverlayModule.hideOverlay()
-        currentOverlayApp = null
-      } catch (error) {
-        console.error("[OVERLAY] Failed to hide overlay", error)
-      }
-    }
-    return
-  }
-
-  // Check if OverlayModule is available
-  if (!OverlayModule) {
-    console.error("[OVERLAY] Native overlay module unavailable")
-    return
-  }
-
-  const penalty = await getActivePenalty()
-  const penaltyActive = penalty?.active === true
-  const endsAtMillis = parseEndsAtMillis(penalty)
-  if (AppWatcherServiceModule?.setPenaltyEndsAtMillis) {
-    AppWatcherServiceModule.setPenaltyEndsAtMillis(endsAtMillis)
-  }
-  if (AppWatcherServiceModule?.setPenaltyActive) {
-    AppWatcherServiceModule.setPenaltyActive(!!penaltyActive)
-  }
-  if (currentPackageName !== packageName) {
-    return
-  }
-
-  await updateOverlayForPenalty(penaltyActive, endsAtMillis)
 }
